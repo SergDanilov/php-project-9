@@ -25,3 +25,6 @@ make setup
 ```bash
 make start
 ```
+Open in browser: http://localhost:8000
+
+---
