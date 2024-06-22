@@ -16,3 +16,9 @@ compose-setup: compose-build
 
 compose-build:
 	docker-compose build
+
+lint:
+	composer exec --verbose phpcs -- --standard=PSR12 src public templates tests
+
+test:
+	composer exec --verbose phpunit tests
