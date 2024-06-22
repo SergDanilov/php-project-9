@@ -1,4 +1,4 @@
-FROM php:8.2.20-alpine
+FROM php:8.2-cli
 
 
 RUN apt-get update && apt-get install -y libzip-dev libpq-dev
