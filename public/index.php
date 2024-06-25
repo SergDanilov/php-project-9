@@ -43,3 +43,5 @@ $app->get('/', function ($request, $response) use ($router) {
 
     return $this->get('renderer')->render($response, 'main.phtml', $params);
 })->setName('main');
+
+$app->run();
