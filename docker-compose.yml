@@ -1,14 +1,20 @@
----
-
-version: '3'
-
 services:
   web:
     build:
-      context: .
+      context: ./docker/web
     command: make start
     ports:
       - "8080:8080"
     volumes:
       - ".:/app"
       - "/tmp:/tmp"
+  postgres:
+    image: postgres:11.2-alpine
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: example_user
+      POSTGRES_PASSWORD: example_password
+      POSTGRES_DB: example_db
+    ports:
+      - "5432:5432"
