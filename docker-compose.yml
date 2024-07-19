@@ -7,6 +7,8 @@ services:
       - "8080:8080"
     volumes:
       - ".:/app"
+    networks:
+      - base
 
   postgres:
     image: postgres:11.2-alpine
@@ -18,7 +20,13 @@ services:
       POSTGRES_DB: analyzer_db
     ports:
       - "5432:5432"
+    networks:
+      - base
 
 volumes:
   postgres:
+
+networks:
+  base:
+    driver: bridge
 
