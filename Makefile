@@ -1,7 +1,7 @@
 PORT ?= 8000
 
 start:
-	docker compose up -d
+	php -S 0.0.0.0:$(PORT) -t public public/index.php
 
 stop:
 	docker compose down
