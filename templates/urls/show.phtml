@@ -32,7 +32,9 @@
                 <div class="col-12 col-md-10 col-lg-8 mx-auto border rounded-3 bg-light p-5">
 
                     <?php if (!empty($flash)): ?>
-                    <p style="color: green"><?= $flash['success'][0]?></p>
+                        <div class="alert alert-success" role="alert">
+                            <?= $flash['success'][0]?>
+                        </div>
                     <?php endif; ?>
 
                     <h1 class="display-3">Сайт: <?= htmlspecialchars($url['name']) ?></h1>

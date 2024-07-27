@@ -29,7 +29,9 @@
     <main class="flex-grow-1">
         <div class="container-lg mt-3">
             <?php if (!empty($flash)): ?>
-            <p style="color: green"><?= $flash['success'][0]?></p>
+                <div class="alert alert-success" role="alert">
+                    <?= $flash['success'][0]?>
+                </div>
             <?php endif; ?>
             <h1>Сайты</h1>
             <div class="table-responsive">
@@ -43,6 +45,12 @@
                     </tr>
                     </thead>
                     <tbody>
+                    <?php foreach ($urls as $url):?>
+                        <td><?= htmlspecialchars($url['id']) ?></td>
+                        <td><?= htmlspecialchars($url['name']) ?></td>
+                        <td><?= htmlspecialchars($url['created_at']) ?></td>
+                        <td>response ??</td>
+                    <?php endforeach; ?>   
                     </tbody>
                 </table>
             </div>
