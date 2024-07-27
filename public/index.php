@@ -72,21 +72,23 @@ $app->get('/urls', function ($request, $response) {
 })->setName('urls.index');
 
 $app->post('/urls', function ($request, $response) use ($router) {
-    $urls = getUrls($request);
+    $repo = new App\UrlRepository();
+    // Извлекаем данные формы
     $urlData = $request->getParsedBodyParam('url');
 
     $validator = new Validator();
     $errors = $validator->validate($urlData);
 
     if (count($errors) === 0) {
-        $id = uniqid();
-        $url[$id] = $urlData;
+        $repo->save($urlData);
+        // $id = uniqid();
+        // $url[$id] = $urlData;
 
-        $encodedUrls = json_encode($urls);
+        // $encodedUrls = json_encode($urls);
 
         $this->get('flash')->addMessage('success', 'Страница успешно добавлена');
 
-        return $response->withHeader('Set-Cookie', "urls={$encodedUrls};path=/")
+        return $response->withHeader('Set-Cookie', "urls={$urlData};path=/")
             ->withRedirect($router->urlFor('urls.index'));
     }
 
