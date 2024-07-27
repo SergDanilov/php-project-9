@@ -14,20 +14,32 @@ use Slim\Factory\AppFactory;
 use Slim\Middleware\MethodOverrideMiddleware;
 use DI\Container;
 use App\Validator;
+use Psr\Container\ContainerInterface;
 
 // Старт PHP сессии
 session_start();
-function getUrls($request)
-{
-    return json_decode($request->getCookieParam('urls') ?? '', true);
-}
 
-function filterUrlsByName($urls, $term)
-{
-    return array_filter($urls, fn($url) => str_contains($url['name'], $term) !== false);
-}
 
 $container = new Container();
+// Database connection settings
+$container->set('db', function (ContainerInterface $c) {
+    $settings = [
+                    "driver" => "pgsql",
+                    "host" => "localhost",
+                    "database" => "analyzer_db",
+                    "charset" => "utf8",
+                    "username" => "analyzer_user",
+                    "password" => "analyzer_password",
+                ];
+    
+    $dsn = "{$settings['driver']}:host={$settings['host']};dbname={$settings['database']};charset={$settings['charset']}";
+    $options = [
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES   => false,
+    ];
+    return new PDO($dsn, $settings['username'], $settings['password'], $options);
+});
 $container->set('renderer', function () {
     // Параметром передается базовая директория, в которой будут храниться шаблоны
     return new \Slim\Views\PhpRenderer(__DIR__ . '/../templates');
@@ -42,6 +54,19 @@ $router = $app->getRouteCollector()->getRouteParser();
 
 $app->addErrorMiddleware(true, true, true);
 $app->add(MethodOverrideMiddleware::class);
+
+function getUrls($request)
+{
+    $db = $this->get('db');
+    $stmt = $db->query("SELECT * FROM urls");
+    $urls = $stmt->fetchAll();
+    return $urls;
+}
+
+function filterUrlsByName($urls, $term)
+{
+    return array_filter($urls, fn($url) => str_contains($url['name'], $term) !== false);
+}
 
 $app->get('/', function ($request, $response) use ($router) {
 
@@ -72,23 +97,22 @@ $app->get('/urls', function ($request, $response) {
 })->setName('urls.index');
 
 $app->post('/urls', function ($request, $response) use ($router) {
-    $repo = new App\UrlRepository();
-    // Извлекаем данные формы
+    
+    $urls = getUrls($request);
     $urlData = $request->getParsedBodyParam('url');
 
     $validator = new Validator();
     $errors = $validator->validate($urlData);
 
     if (count($errors) === 0) {
-        $repo->save($urlData);
-        // $id = uniqid();
-        // $url[$id] = $urlData;
+        $id = uniqid();
+        $url[$id] = $urlData;
 
-        // $encodedUrls = json_encode($urls);
+        $encodedUrls = json_encode($urls);
 
         $this->get('flash')->addMessage('success', 'Страница успешно добавлена');
 
-        return $response->withHeader('Set-Cookie', "urls={$urlData};path=/")
+        return $response->withHeader('Set-Cookie', "urls={$encodedUrls};path=/")
             ->withRedirect($router->urlFor('urls.index'));
     }
 
