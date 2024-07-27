@@ -19,20 +19,18 @@ use Psr\Container\ContainerInterface;
 // Старт PHP сессии
 session_start();
 
-
 $container = new Container();
 // Database connection settings
 $container->set('db', function (ContainerInterface $c) {
     $settings = [
                     "driver" => "pgsql",
-                    "host" => "localhost",
+                    "host" => "postgres",
                     "database" => "analyzer_db",
-                    "charset" => "utf8",
                     "username" => "analyzer_user",
                     "password" => "analyzer_password",
                 ];
     
-    $dsn = "{$settings['driver']}:host={$settings['host']};dbname={$settings['database']};charset={$settings['charset']}";
+    $dsn = "{$settings['driver']}:host={$settings['host']};dbname={$settings['database']}";
     $options = [
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -55,9 +53,8 @@ $router = $app->getRouteCollector()->getRouteParser();
 $app->addErrorMiddleware(true, true, true);
 $app->add(MethodOverrideMiddleware::class);
 
-function getUrls($request)
+function getUrls($db, $request)
 {
-    $db = $this->get('db');
     $stmt = $db->query("SELECT * FROM urls");
     $urls = $stmt->fetchAll();
     return $urls;
@@ -80,9 +77,10 @@ $app->get('/', function ($request, $response) use ($router) {
 })->setName('main');
 
 $app->get('/urls', function ($request, $response) {
-    
+    // var_dump($this->container);
+    // die();
     $term = $request->getQueryParam('term') ?? '';
-    $urls = getUrls($request) ?? [];
+    $urls = getUrls($this->get('db'), $request) ?? [];
     $urlsList = isset($term) ? filterUrlsByName($urls, $term) : $urls;
 
     $messages = $this->get('flash')->getMessages();
@@ -98,7 +96,7 @@ $app->get('/urls', function ($request, $response) {
 
 $app->post('/urls', function ($request, $response) use ($router) {
     
-    $urls = getUrls($request);
+    $urls = getUrls($this->get('db'), $request) ?? [];
     $urlData = $request->getParsedBodyParam('url');
 
     $validator = new Validator();
@@ -111,9 +109,12 @@ $app->post('/urls', function ($request, $response) use ($router) {
         $encodedUrls = json_encode($urls);
 
         $this->get('flash')->addMessage('success', 'Страница успешно добавлена');
-
-        return $response->withHeader('Set-Cookie', "urls={$encodedUrls};path=/")
-            ->withRedirect($router->urlFor('urls.index'));
+        $params = [
+            'urls' => $urls
+        ];
+        return $this->get('renderer')->render($response, 'urls/index.phtml', $params)->withHeader('Set-Cookie', "urls={$encodedUrls};path=/");
+        // return $response->withHeader('Set-Cookie', "urls={$encodedUrls};path=/")
+        //     ->withRedirect($router->urlFor('urls.index'));
     }
 
     $params = [
@@ -137,7 +138,7 @@ $app->get('/urls/new', function ($request, $response) {
 $app->get('/urls/{id}', function ($request, $response, $args) {
 
     $id = $args['id'];
-    $urls = getUrls($request);
+    $urls = getUrls($this->get('db'), $request) ?? [];
 
     if (!array_key_exists($id, $urls)) {
         return $response->write('Page not found')->withStatus(404);
