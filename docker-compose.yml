@@ -4,9 +4,10 @@ services:
       context: ./docker/web
     command: make start
     ports:
-      - "8080:8080"
+      - "8000:8000"
     volumes:
       - ".:/app"
+      - vendor_data:/var/www/vendor
     networks:
       - base
 
@@ -25,6 +26,7 @@ services:
 
 volumes:
   postgres:
+  vendor_data:
 
 networks:
   base:
