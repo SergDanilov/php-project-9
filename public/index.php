@@ -64,6 +64,32 @@ function filterUrlsByName($urls, $term)
 {
     return array_filter($urls, fn($url) => str_contains($url['name'], $term) !== false);
 }
+// добавление записи в бд
+function addUrl($db, $url)
+{
+    
+    // Проверяем, существует ли уже запись с данным URL
+    $stmt = $db->prepare("SELECT COUNT(*) FROM urls WHERE name = :name");
+    $stmt->execute([':name' => $url['name']]);
+    $count = $stmt->fetchColumn();
+
+    if ($count > 0) {
+        // Если запись с таким ID уже существует, возвращаем сообщение об ошибке
+        return "Запись с {$url['name']} уже существует.";
+    } else {
+        // Если уникальный, добавляем новую запись
+        $stmt = $db->prepare("INSERT INTO urls (name) VALUES (:name)");
+        $result = $stmt->execute([
+            ':name' => $url['name']
+        ]);
+
+        if ($result) {
+            return "Запись успешно добавлена.";
+        } else {
+            return "Ошибка при добавлении записи.";
+        }
+    }
+}
 
 $app->get('/', function ($request, $response) use ($router) {
 
@@ -77,8 +103,7 @@ $app->get('/', function ($request, $response) use ($router) {
 })->setName('main');
 
 $app->get('/urls', function ($request, $response) {
-    // var_dump($this->container);
-    // die();
+
     $term = $request->getQueryParam('term') ?? '';
     $urls = getUrls($this->get('db'), $request) ?? [];
     $urlsList = isset($term) ? filterUrlsByName($urls, $term) : $urls;
@@ -93,7 +118,7 @@ $app->get('/urls', function ($request, $response) {
 
     return $this->get('renderer')->render($response, 'urls/index.phtml', $params);
 })->setName('urls.index');
-
+// добавление нового урл в таблицу
 $app->post('/urls', function ($request, $response) use ($router) {
     
     $urls = getUrls($this->get('db'), $request) ?? [];
@@ -103,8 +128,9 @@ $app->post('/urls', function ($request, $response) use ($router) {
     $errors = $validator->validate($urlData);
 
     if (count($errors) === 0) {
-        $id = uniqid();
-        $url[$id] = $urlData;
+        // $id = uniqid();
+        // $url[$id] = $urlData;
+        addUrl($this->get('db'), $urlData);
 
         $encodedUrls = json_encode($urls);
 
@@ -112,9 +138,9 @@ $app->post('/urls', function ($request, $response) use ($router) {
         $params = [
             'urls' => $urls
         ];
-        return $this->get('renderer')->render($response, 'urls/index.phtml', $params)->withHeader('Set-Cookie', "urls={$encodedUrls};path=/");
-        // return $response->withHeader('Set-Cookie', "urls={$encodedUrls};path=/")
-        //     ->withRedirect($router->urlFor('urls.index'));
+        return $this->get('renderer')->render($response, 'urls/index.phtml', $params)
+        ->withHeader('Set-Cookie', "urls={$encodedUrls};path=/")
+        ->withRedirect($router->urlFor('urls.index'));
     }
 
     $params = [
@@ -122,7 +148,7 @@ $app->post('/urls', function ($request, $response) use ($router) {
         'errors' => $errors
     ];
 
-    return $this->get('renderer')->render($response->withStatus(422), 'urls/new.phtml', $params);
+    return $this->get('renderer')->render($response->withStatus(422), 'main.phtml', $params);
 })->setName('urls.store');
 
 $app->get('/urls/new', function ($request, $response) {
