@@ -1,6 +1,5 @@
 <?php
 
-// Подключение автозагрузки через composer
 $autoloadPath1 = __DIR__ . '/../../autoload.php';
 $autoloadPath2 = __DIR__ . '/../vendor/autoload.php';
 
@@ -29,7 +28,7 @@ $container->set('db', function (ContainerInterface $c) {
                     "username" => "analyzer_user",
                     "password" => "analyzer_password",
                 ];
-    
+
     $dsn = "{$settings['driver']}:host={$settings['host']};dbname={$settings['database']}";
     $options = [
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
@@ -67,7 +66,6 @@ function filterUrlsByName($urls, $term)
 // добавление записи в бд
 function addUrl($db, $url)
 {
-    
     // Проверяем, существует ли уже запись с данным URL
     $stmt = $db->prepare("SELECT COUNT(*) FROM urls WHERE name = :name");
     $stmt->execute([':name' => $url['name']]);
@@ -101,7 +99,7 @@ function getUrlById($db, $id)
     if ($count > 0) {
         $stmt = $db->query("SELECT * FROM urls WHERE id = $id");
         $urlData = $stmt->fetch();
-        return $urlData;   
+        return $urlData;
     } else {
         return "Запись с ID = {$id} не найдена.";
     }
@@ -121,7 +119,6 @@ $app->get('/', function ($request, $response) use ($router) {
 $app->get('/urls', function ($request, $response) {
 
     $urlsList = getUrls($this->get('db'), $request) ?? [];
-     
     $messages = $this->get('flash')->getMessages();
 
     $params = [
@@ -133,7 +130,7 @@ $app->get('/urls', function ($request, $response) {
 })->setName('urls.index');
 // добавление нового урла в таблицу
 $app->post('/urls', function ($request, $response) use ($router) {
-    
+
     $urls = getUrls($this->get('db'), $request) ?? [];
     $urlData = $request->getParsedBodyParam('url');
 
