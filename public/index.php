@@ -74,7 +74,7 @@ function addUrl($db, $url)
     $count = $stmt->fetchColumn();
 
     if ($count > 0) {
-        // Если запись с таким ID уже существует, возвращаем сообщение об ошибке
+        // Если запись с таким именем уже существует, возвращаем сообщение об ошибке
         return "Запись с {$url['name']} уже существует.";
     } else {
         // Если уникальный, добавляем новую запись
@@ -91,6 +91,22 @@ function addUrl($db, $url)
     }
 }
 
+function getUrlById($db, $id)
+{
+    // Делаем выборку по ID
+    $stmt = $db->prepare("SELECT COUNT(*) FROM urls WHERE id = :id");
+    $stmt->execute([':id' => $id]);
+    $count = $stmt->fetchColumn();
+    // Проверяем, существует ли уже запись с данным ID
+    if ($count > 0) {
+        $stmt = $db->query("SELECT * FROM urls WHERE id = $id");
+        $urlData = $stmt->fetch();
+        return $urlData;   
+    } else {
+        return "Запись с ID = {$id} не найдена.";
+    }
+}
+
 $app->get('/', function ($request, $response) use ($router) {
 
     $messages = $this->get('flash')->getMessages();
@@ -104,21 +120,18 @@ $app->get('/', function ($request, $response) use ($router) {
 
 $app->get('/urls', function ($request, $response) {
 
-    $term = $request->getQueryParam('term') ?? '';
-    $urls = getUrls($this->get('db'), $request) ?? [];
-    $urlsList = isset($term) ? filterUrlsByName($urls, $term) : $urls;
-
+    $urlsList = getUrls($this->get('db'), $request) ?? [];
+     
     $messages = $this->get('flash')->getMessages();
 
     $params = [
       'urls' => $urlsList,
-      'term' => $term,
       'flash' => $messages
     ];
 
     return $this->get('renderer')->render($response, 'urls/index.phtml', $params);
 })->setName('urls.index');
-// добавление нового урл в таблицу
+// добавление нового урла в таблицу
 $app->post('/urls', function ($request, $response) use ($router) {
     
     $urls = getUrls($this->get('db'), $request) ?? [];
@@ -150,17 +163,7 @@ $app->post('/urls', function ($request, $response) use ($router) {
 
     return $this->get('renderer')->render($response->withStatus(422), 'main.phtml', $params);
 })->setName('urls.store');
-
-$app->get('/urls/new', function ($request, $response) {
-
-    $params = [
-        'urlData' => [],
-        'errors' => []
-    ];
-
-    return $this->get('renderer')->render($response, 'urls/new.phtml', $params);
-})->setName('urls.create');
-
+// отображение конкретной страницы
 $app->get('/urls/{id}', function ($request, $response, $args) {
 
     $id = $args['id'];
@@ -170,11 +173,13 @@ $app->get('/urls/{id}', function ($request, $response, $args) {
         return $response->write('Page not found')->withStatus(404);
     }
 
+    $dbUrls = $this->get('db');
+    $url = getUrlById($dbUrls, $id);
     $messages = $this->get('flash')->getMessages();
 
     $params = [
         'id' => $id,
-        'url' => $urls[$id],
+        'url' => $url,
         'flash' => $messages
     ];
 
