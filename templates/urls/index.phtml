@@ -48,9 +48,9 @@
                     <?php foreach ($urls as $url):?>
                       <tr>
                         <td><?= htmlspecialchars($url['id']) ?></td>
-                        <td><?= htmlspecialchars($url['name']) ?></td>
+                        <td><a href="/urls/<?= htmlspecialchars($url['id']) ?>"><?= htmlspecialchars($url['name']) ?></a></td>
                         <td><?= htmlspecialchars($url['created_at']) ?></td>
-                        <td>response ??</td>
+                        <td>200</td>
                     </tr>
                     <?php endforeach; ?>
                     
