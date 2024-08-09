@@ -54,7 +54,7 @@ $app->add(MethodOverrideMiddleware::class);
 
 function getUrls($db, $request)
 {
-    $stmt = $db->query("SELECT * FROM urls");
+    $stmt = $db->query("SELECT * FROM urls ORDER BY created_at DESC");
     $urls = $stmt->fetchAll();
     return $urls;
 }
@@ -166,7 +166,7 @@ $app->get('/urls/{id}', function ($request, $response, $args) {
     $id = $args['id'];
     $urls = getUrls($this->get('db'), $request) ?? [];
 
-    if (!array_key_exists($id, $urls)) {
+    if (!in_array($url, $urls)) {
         return $response->write('Page not found')->withStatus(404);
     }
 
