@@ -59,10 +59,6 @@ function getUrls($db, $request)
     return $urls;
 }
 
-function filterUrlsByName($urls, $term)
-{
-    return array_filter($urls, fn($url) => str_contains($url['name'], $term) !== false);
-}
 // добавление записи в бд
 function addUrl($db, $url)
 {
@@ -73,9 +69,9 @@ function addUrl($db, $url)
 
     if ($count > 0) {
         // Если запись с таким именем уже существует, возвращаем сообщение об ошибке
-        return "Запись с {$url['name']} уже существует.";
+        return "Error";
     } else {
-        // Если уникальный, добавляем новую запись
+        // Если уникальный, добавляем новую запись.
         $stmt = $db->prepare("INSERT INTO urls (name) VALUES (:name)");
         $result = $stmt->execute([
             ':name' => $url['name']
@@ -126,6 +122,7 @@ $app->get('/urls', function ($request, $response) {
       'flash' => $messages
     ];
 
+    
     return $this->get('renderer')->render($response, 'urls/index.phtml', $params);
 })->setName('urls.index');
 // добавление нового урла в таблицу
@@ -140,16 +137,22 @@ $app->post('/urls', function ($request, $response) use ($router) {
     if (count($errors) === 0) {
         // $id = uniqid();
         // $url[$id] = $urlData;
-        addUrl($this->get('db'), $urlData);
+        $result = addUrl($this->get('db'), $urlData);
 
-        $encodedUrls = json_encode($urls);
+        // $encodedUrls = json_encode($urls);
 
-        $this->get('flash')->addMessage('success', 'Страница успешно добавлена');
+        if ($result === "Error") {
+            $this->get('flash')->addMessage('error', "Страница уже существует");
+        } else {
+            $this->get('flash')->addMessage('success', 'Страница успешно добавлена');
+        }
+        $messages = $this->get('flash')->getMessages();
+        
         $params = [
-            'urls' => $urls
+            'urls' => $urls,
+            'flash' => $messages
         ];
         return $this->get('renderer')->render($response, 'urls/index.phtml', $params)
-        ->withHeader('Set-Cookie', "urls={$encodedUrls};path=/")
         ->withRedirect($router->urlFor('urls.index'));
     }
 
@@ -165,18 +168,19 @@ $app->get('/urls/{id}', function ($request, $response, $args) {
 
     $id = $args['id'];
     $urls = getUrls($this->get('db'), $request) ?? [];
+    $dbUrls = $this->get('db');
+    $url = getUrlById($dbUrls, $id);
 
     if (!in_array($url, $urls)) {
         return $response->write('Page not found')->withStatus(404);
     }
-
-    $dbUrls = $this->get('db');
-    $url = getUrlById($dbUrls, $id);
+    
     $messages = $this->get('flash')->getMessages();
 
     $params = [
         'id' => $id,
         'url' => $url,
+        'urls' => $urls,
         'flash' => $messages
     ];
 

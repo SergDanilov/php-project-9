@@ -28,9 +28,13 @@
     </header>
     <main class="flex-grow-1">
         <div class="container-lg mt-3">
-            <?php if (!empty($flash)): ?>
+            <?php if (!empty($flash['success'])): ?>
                 <div class="alert alert-success" role="alert">
                     <?= $flash['success'][0]?>
+                </div>
+            <?php elseif (!empty($flash['errors'])): ?>
+                <div class="alert alert-danger" role="alert">
+                    <?= $flash['error'][0]?>
                 </div>
             <?php endif; ?>
             <h1>Сайты</h1>
