@@ -14,6 +14,7 @@ use Slim\Middleware\MethodOverrideMiddleware;
 use DI\Container;
 use App\Validator;
 use Psr\Container\ContainerInterface;
+use Carbon\Carbon;
 
 // Старт PHP сессии
 session_start();
@@ -117,6 +118,12 @@ $app->get('/urls', function ($request, $response) {
     $urlsList = getUrls($this->get('db'), $request) ?? [];
     $messages = $this->get('flash')->getMessages();
 
+    foreach ($urlsList as $url) {
+        $dateFormat = Carbon::now()->toDateTimeString();
+        $url['created_at'] = $dateFormat;
+    }
+    
+
     $params = [
       'urls' => $urlsList,
       'flash' => $messages
@@ -147,6 +154,9 @@ $app->post('/urls', function ($request, $response) use ($router) {
             $this->get('flash')->addMessage('success', 'Страница успешно добавлена');
         }
         $messages = $this->get('flash')->getMessages();
+        // $date = $urls['created_at'];
+        $dateFormat = new DateTime($urls['created_at']);
+        $urls['created_at'] = $dateFormat->format('Y-m-d H:i:s');
         
         $params = [
             'urls' => $urls,
