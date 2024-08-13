@@ -122,14 +122,12 @@ $app->get('/urls', function ($request, $response) {
         $dateFormat = Carbon::now()->toDateTimeString();
         $url['created_at'] = $dateFormat;
     }
-    
 
     $params = [
       'urls' => $urlsList,
       'flash' => $messages
     ];
 
-    
     return $this->get('renderer')->render($response, 'urls/index.phtml', $params);
 })->setName('urls.index');
 // добавление нового урла в таблицу
@@ -142,28 +140,21 @@ $app->post('/urls', function ($request, $response) use ($router) {
     $errors = $validator->validate($urlData);
 
     if (count($errors) === 0) {
-        // $id = uniqid();
-        // $url[$id] = $urlData;
-        $result = addUrl($this->get('db'), $urlData);
+        $newUrl = addUrl($this->get('db'), $urlData);
 
-        // $encodedUrls = json_encode($urls);
-
-        if ($result === "Error") {
+        if ($newUrl === "Error") {
             $this->get('flash')->addMessage('error', "Страница уже существует");
         } else {
             $this->get('flash')->addMessage('success', 'Страница успешно добавлена');
         }
         $messages = $this->get('flash')->getMessages();
-        // $date = $urls['created_at'];
-        $dateFormat = new DateTime($urls['created_at']);
-        $urls['created_at'] = $dateFormat->format('Y-m-d H:i:s');
-        
+
         $params = [
-            'urls' => $urls,
+            'url' => $newUrl,
             'flash' => $messages
         ];
-        return $this->get('renderer')->render($response, 'urls/index.phtml', $params)
-        ->withRedirect($router->urlFor('urls.index'));
+        return $this->get('renderer')->render($response, 'urls/show.phtml', $params)
+        ->withRedirect($router->urlFor('urls.show'));
     }
 
     $params = [
@@ -184,7 +175,7 @@ $app->get('/urls/{id}', function ($request, $response, $args) {
     if (!in_array($url, $urls)) {
         return $response->write('Page not found')->withStatus(404);
     }
-    
+
     $messages = $this->get('flash')->getMessages();
 
     $params = [
