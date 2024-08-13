@@ -51,10 +51,10 @@
                     <tbody>
                     <?php foreach ($urls as $url):?>
                       <tr>
-                        <td><?= htmlspecialchars($url['id']) ?></td>
-                        <td><a href="/urls/<?= htmlspecialchars($url['id']) ?>"><?= htmlspecialchars($url['name']) ?></a></td>
-                        <td><?= htmlspecialchars($url['created_at']) ?></td>
-                        <td>200</td>
+                        <td><?= $url['id'] ?></td>
+                        <td><a href="/urls/<?= $url['id'] ?>"><?= htmlspecialchars($url['name']) ?></a></td>
+                        <td><?= $url['response_code'] ? date("d.m.Y h:m:s", strtotime($url['created_at'])) : '' ?></td>
+                        <td><?= $url['response_code'] ?? ''?></td>
                     </tr>
                     <?php endforeach; ?>
                     
