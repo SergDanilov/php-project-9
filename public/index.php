@@ -63,6 +63,11 @@ function getUrls($db, $request)
 // добавление записи в бд
 function addUrl($db, $url)
 {
+    // Проверяем, существует ли индекс 'name' в массиве $url
+    if (!isset($url['name'])) {
+        return "Error: Missing 'name' in the URL array.";
+    }
+
     // Проверяем, существует ли уже запись с данным URL
     $stmt = $db->prepare("SELECT COUNT(*) FROM urls WHERE name = :name");
     $stmt->execute([':name' => $url['name']]);
@@ -70,18 +75,21 @@ function addUrl($db, $url)
 
     if ($count > 0) {
         // Если запись с таким именем уже существует, возвращаем сообщение об ошибке
-        return "Error";
+        return "Error: URL already exists.";
     } else {
         // Если уникальный, добавляем новую запись.
         $stmt = $db->prepare("INSERT INTO urls (name) VALUES (:name)");
-        $result = $stmt->execute([
-            ':name' => $url['name']
-        ]);
+        $result = $stmt->execute([':name' => $url['name']]);
 
         if ($result) {
-            return "Запись успешно добавлена.";
+            // Получаем добавленный URL
+            $stmt = $db->prepare("SELECT * FROM urls WHERE name = :name");
+            $stmt->execute([':name' => $url['name']]);
+            $createdUrl = $stmt->fetchAll();
+            return $createdUrl; // Возвращаем добавленный URL в случае успеха
         } else {
-            return "Ошибка при добавлении записи.";
+            // Обработка ошибки вставки
+            return "Error: Unable to insert URL.";
         }
     }
 }
@@ -102,6 +110,7 @@ function getUrlById($db, $id)
     }
 }
 
+//главная страница
 $app->get('/', function ($request, $response) use ($router) {
 
     $messages = $this->get('flash')->getMessages();
@@ -130,10 +139,11 @@ $app->get('/urls', function ($request, $response) {
 
     return $this->get('renderer')->render($response, 'urls/index.phtml', $params);
 })->setName('urls.index');
-// добавление нового урла в таблицу
+
+// добавление нового урла в таблицу в бд
 $app->post('/urls', function ($request, $response) use ($router) {
 
-    $urls = getUrls($this->get('db'), $request) ?? [];
+    // $urls = getUrls($this->get('db'), $request) ?? [];
     $urlData = $request->getParsedBodyParam('url');
 
     $validator = new Validator();
@@ -147,14 +157,20 @@ $app->post('/urls', function ($request, $response) use ($router) {
         } else {
             $this->get('flash')->addMessage('success', 'Страница успешно добавлена');
         }
-        $messages = $this->get('flash')->getMessages();
 
+        $messages = $this->get('flash')->getMessages();
+        // Получаем ID новой записи
+        $newId = $newUrl[0]['id'];
         $params = [
-            'url' => $newUrl,
+            'id' => $newId,
             'flash' => $messages
         ];
-        return $this->get('renderer')->render($response, 'urls/show.phtml', $params)
-        ->withRedirect($router->urlFor('urls.show'));
+        // Генерируем URL для редиректа
+        $url = $router->urlFor('urls.show', $params);
+        // Редирект на маршрут с ID новой записи
+        return $response->withRedirect($url);
+        // return $this->get('renderer')->render($response, 'urls/show.phtml', $params)
+        // ->withRedirect($url);
     }
 
     $params = [
@@ -164,6 +180,7 @@ $app->post('/urls', function ($request, $response) use ($router) {
 
     return $this->get('renderer')->render($response->withStatus(422), 'main.phtml', $params);
 })->setName('urls.store');
+
 // отображение конкретной страницы
 $app->get('/urls/{id}', function ($request, $response, $args) {
 
@@ -187,5 +204,4 @@ $app->get('/urls/{id}', function ($request, $response, $args) {
 
     return $this->get('renderer')->render($response, 'urls/show.phtml', $params);
 })->setName('urls.show');
-
 $app->run();
