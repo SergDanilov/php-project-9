@@ -64,9 +64,9 @@ function getUrls($db, $request)
 function addUrl($db, $url)
 {
     // Проверяем, существует ли индекс 'name' в массиве $url
-    if (!isset($url['name'])) {
-        return "Error: Missing 'name' in the URL array.";
-    }
+    // if (!isset($url['name'])) {
+    //     return "Error: Missing 'name' in the URL array.";
+    // }
 
     // Проверяем, существует ли уже запись с данным URL
     $stmt = $db->prepare("SELECT COUNT(*) FROM urls WHERE name = :name");
@@ -74,8 +74,11 @@ function addUrl($db, $url)
     $count = $stmt->fetchColumn();
 
     if ($count > 0) {
+        $stmt = $db->prepare("SELECT COUNT(*) FROM urls WHERE id = :id");
+        $stmt->execute([':id' => $url['id']]);
+        $currentUrl = $stmt->fetchAll();
         // Если запись с таким именем уже существует, возвращаем сообщение об ошибке
-        return "Error: URL already exists.";
+        return $currentUrl;
     } else {
         // Если уникальный, добавляем новую запись.
         $stmt = $db->prepare("INSERT INTO urls (name) VALUES (:name)");
@@ -152,8 +155,24 @@ $app->post('/urls', function ($request, $response) use ($router) {
     if (count($errors) === 0) {
         $newUrl = addUrl($this->get('db'), $urlData);
 
-        if ($newUrl === "Error") {
+        $stmt = $this->get('db')->prepare("SELECT COUNT(*) FROM urls WHERE id = :id");
+        $stmt->execute([':id' => $urlData['id']]);
+        $currentUrl = $stmt->fetchAll();
+
+        if ($newUrl === $currentUrl) {
             $this->get('flash')->addMessage('error', "Страница уже существует");
+            $messages = $this->get('flash')->getMessages();
+
+            $urls = $urlData['name'];
+            $dbUrls = $this->get('db');
+            // $url = getUrlById($dbUrls, $id);
+            $params = [
+                'url' => $urls,
+                'flash' => $messages
+            ];
+            $url = $router->urlFor('main', $params);
+            // Редирект на главную с выводом сообщения: "Страница уже существует"
+            return $response->withRedirect($url);
         } else {
             $this->get('flash')->addMessage('success', 'Страница успешно добавлена');
         }
@@ -169,8 +188,6 @@ $app->post('/urls', function ($request, $response) use ($router) {
         $url = $router->urlFor('urls.show', $params);
         // Редирект на маршрут с ID новой записи
         return $response->withRedirect($url);
-        // return $this->get('renderer')->render($response, 'urls/show.phtml', $params)
-        // ->withRedirect($url);
     }
 
     $params = [

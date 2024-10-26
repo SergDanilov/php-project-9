@@ -29,22 +29,38 @@
     <main class="flex-grow-1">
       <div class="container-lg mt-3">
         <div class="row">
-                <div class="col-12 col-md-10 col-lg-8 mx-auto border rounded-3 bg-light p-5">
-                  <?php if (!empty($flash)): ?>
-                      <p style="color: red"><?= $flash['error'][0]?></p>
+          <div class="col-12 col-md-10 col-lg-8 mx-auto border rounded-3 bg-light p-5">
+            <?php if (!empty($flash)): ?>
+                <p style="color: red"><?= $flash['error'][0]?></p>
+            <?php endif; ?>
+            
+            <?php if (isset($errors)): 
+              $placeholder = $errors['url'];?>
+            <?php else: ?>
+              <?php $placeholder = "https://www.example.com";?>
+            <?php endif; ?>
+            
+            <? var_dump($url); ?>
+            <h1 class="display-3">Анализатор страниц</h1>
+            <p class="lead">Бесплатно проверяйте сайты на SEO пригодность</p>
+              <form action="/urls" method="post" class="row" required>
+                <div class="col-8">
+                  <label for="text" class="visually-hidden">Url для проверки</label>
+                  <input type="text" name="url[name]" value="" class="form-control form-control-lg<?php if (isset($errors)):?> is-invalid<?php endif; ?>" placeholder="<?= $placeholder ?>">
+                  <?php if (isset($errors)):
+                    foreach($errors as $key => $value) {
+                      $mess = $value;
+                      if ($key != 'url'):?>
+                        <p style="color: red"><?= $mess ?></p>
+                      <?php endif; ?>
+                    <?}?>
                   <?php endif; ?>
-                  <h1 class="display-3">Анализатор страниц</h1>
-                  <p class="lead">Бесплатно проверяйте сайты на SEO пригодность</p>
-                      <form action="/urls" method="post" class="row" required>
-                        <div class="col-8">
-                          <label for="text" class="visually-hidden">Url для проверки</label>
-                          <input type="text" name="url[name]" value="" class="form-control form-control-lg" placeholder="https://www.example.com">
-                        </div>
-                        <div class="col-2">
-                          <input type="submit" class="btn btn-primary btn-lg ms-3 px-5 text-uppercase mx-3" value="Проверить"> 
-                        </div>   
-                      </form>
                 </div>
+                <div class="col-2">
+                  <input type="submit" class="btn btn-primary btn-lg ms-3 px-5 text-uppercase mx-3" value="Проверить"> 
+                </div>   
+              </form>
+          </div>
         </div>
       </div>
     </main>
