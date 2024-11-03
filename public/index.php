@@ -53,6 +53,7 @@ $router = $app->getRouteCollector()->getRouteParser();
 $app->addErrorMiddleware(true, true, true);
 $app->add(MethodOverrideMiddleware::class);
 
+/**********functions*********/
 function getUrls($db, $request)
 {
     $stmt = $db->query("SELECT * FROM urls ORDER BY created_at DESC");
@@ -60,29 +61,48 @@ function getUrls($db, $request)
     return $urls;
 }
 
+function getUrlChecks($db)
+{
+    $stmt = $db->query("SELECT * FROM url_checks ORDER BY created_at DESC");
+    $url_checks = $stmt->fetchAll();
+    return $url_checks;
+}
+
+function getUrlChecksById($db, $urlId)
+{
+    $stmt = $db->query("SELECT * FROM url_checks WHERE url_id = $urlId ORDER BY created_at DESC");
+    $url_checks = $stmt->fetchAll();
+    return $url_checks;
+}
+
+function getLastCheckById($db, $urlId)
+{
+    $stmt = $db->query("SELECT * FROM url_checks WHERE url_id = $urlId ORDER BY created_at DESC LIMIT 1");
+    $last_check = $stmt->fetchAll();
+    return $last_check;
+}
+
 // добавление записи в бд
 function addUrl($db, $url)
 {
-    // Проверяем, существует ли индекс 'name' в массиве $url
-    // if (!isset($url['name'])) {
-    //     return "Error: Missing 'name' in the URL array.";
-    // }
-
     // Проверяем, существует ли уже запись с данным URL
     $stmt = $db->prepare("SELECT COUNT(*) FROM urls WHERE name = :name");
     $stmt->execute([':name' => $url['name']]);
     $count = $stmt->fetchColumn();
 
     if ($count > 0) {
-        $stmt = $db->prepare("SELECT COUNT(*) FROM urls WHERE id = :id");
-        $stmt->execute([':id' => $url['id']]);
+        $stmt = $db->prepare("SELECT * FROM urls WHERE name = :name");
+        $stmt->execute([':name' => $url['name']]);
         $currentUrl = $stmt->fetchAll();
-        // Если запись с таким именем уже существует, возвращаем сообщение об ошибке
+
         return $currentUrl;
     } else {
         // Если уникальный, добавляем новую запись.
         $stmt = $db->prepare("INSERT INTO urls (name) VALUES (:name)");
         $result = $stmt->execute([':name' => $url['name']]);
+        // добфавляем временно!! код ответа = 200
+        $stmt = $db->prepare("INSERT INTO urls (response_code) VALUES (:response_code)");
+        $result = $stmt->execute([':response_code' => 200]);
 
         if ($result) {
             // Получаем добавленный URL
@@ -95,6 +115,17 @@ function addUrl($db, $url)
             return "Error: Unable to insert URL.";
         }
     }
+}
+// добавление проверки в бд
+function addUrlCheck($db, $urlId)
+{
+    
+        // добавляем новую проверку.
+        $stmt = $db->prepare("INSERT INTO url_checks (url_id) VALUES (:url_id)");
+        $result = $stmt->execute([':url_id' => $urlId]);
+
+            // Получаем добавленную проверку
+        return $result; // Возвращаем добавленную проверку в случае успеха
 }
 
 function getUrlById($db, $id)
@@ -112,8 +143,15 @@ function getUrlById($db, $id)
         return "Запись с ID = {$id} не найдена.";
     }
 }
+/**********functions*********/
 
-//главная страница
+
+
+
+
+
+
+//1. главная страница
 $app->get('/', function ($request, $response) use ($router) {
 
     $messages = $this->get('flash')->getMessages();
@@ -125,25 +163,37 @@ $app->get('/', function ($request, $response) use ($router) {
     return $this->get('renderer')->render($response, 'main.phtml', $params);
 })->setName('main');
 
+
+
+//2. список страниц
 $app->get('/urls', function ($request, $response) {
 
     $urlsList = getUrls($this->get('db'), $request) ?? [];
     $messages = $this->get('flash')->getMessages();
+    $urlIdArray = [];
+    
+    foreach ($urlsList as $key => $value) {
+        $urlIdArray[] = $value['id'];
+    }
 
     foreach ($urlsList as $url) {
         $dateFormat = Carbon::now()->toDateTimeString();
         $url['created_at'] = $dateFormat;
+        $url['last_check'] = getLastCheckById($this->get('db'), $url['id']);
     }
 
     $params = [
       'urls' => $urlsList,
+      'urlIdArray' => $urlIdArray,
       'flash' => $messages
     ];
 
     return $this->get('renderer')->render($response, 'urls/index.phtml', $params);
 })->setName('urls.index');
 
-// добавление нового урла в таблицу в бд
+
+
+//3. добавление нового урла в список страниц и в бд
 $app->post('/urls', function ($request, $response) use ($router) {
 
     // $urls = getUrls($this->get('db'), $request) ?? [];
@@ -153,28 +203,32 @@ $app->post('/urls', function ($request, $response) use ($router) {
     $errors = $validator->validate($urlData);
 
     if (count($errors) === 0) {
+        
+        $urlsList = getUrls($this->get('db'), $request) ?? [];
         $newUrl = addUrl($this->get('db'), $urlData);
+        $urlIdArray = [];
+        foreach ($urlsList as $key => $value) {
+            $urlIdArray[] = $value['id'];
+        }
 
-        $stmt = $this->get('db')->prepare("SELECT COUNT(*) FROM urls WHERE id = :id");
-        $stmt->execute([':id' => $urlData['id']]);
-        $currentUrl = $stmt->fetchAll();
-
-        if ($newUrl === $currentUrl) {
-            $this->get('flash')->addMessage('error', "Страница уже существует");
+        if (in_array($newUrl[0]['id'], $urlIdArray)) {
+            $this->get('flash')->addMessage('error', "Страница уже существует!");
             $messages = $this->get('flash')->getMessages();
 
-            $urls = $urlData['name'];
-            $dbUrls = $this->get('db');
-            // $url = getUrlById($dbUrls, $id);
+            $curId = $newUrl[0]['id'];
             $params = [
-                'url' => $urls,
-                'flash' => $messages
+                'id' => $curId,
+                'flash' => $messages,
+                'urls' => $urlsList,
+                'urlIdArray' => $urlIdArray,
             ];
-            $url = $router->urlFor('main', $params);
-            // Редирект на главную с выводом сообщения: "Страница уже существует"
+            $url = $router->urlFor('urls.show', $params);
+            // Редирект на страницу конкретного урла с выводом сообщения: "Страница уже существует!"
             return $response->withRedirect($url);
+
+
         } else {
-            $this->get('flash')->addMessage('success', 'Страница успешно добавлена');
+            $this->get('flash')->addMessage('success', 'Страница успешно добавлена :)');
         }
 
         $messages = $this->get('flash')->getMessages();
@@ -182,7 +236,8 @@ $app->post('/urls', function ($request, $response) use ($router) {
         $newId = $newUrl[0]['id'];
         $params = [
             'id' => $newId,
-            'flash' => $messages
+            'flash' => $messages,
+            // 'urlsList' => $urlsList,
         ];
         // Генерируем URL для редиректа
         $url = $router->urlFor('urls.show', $params);
@@ -198,13 +253,16 @@ $app->post('/urls', function ($request, $response) use ($router) {
     return $this->get('renderer')->render($response->withStatus(422), 'main.phtml', $params);
 })->setName('urls.store');
 
-// отображение конкретной страницы
+
+
+//4. отображение конкретной страницы
 $app->get('/urls/{id}', function ($request, $response, $args) {
 
     $id = $args['id'];
     $urls = getUrls($this->get('db'), $request) ?? [];
     $dbUrls = $this->get('db');
     $url = getUrlById($dbUrls, $id);
+    $checks = getUrlChecksById($this->get('db'), $id);
 
     if (!in_array($url, $urls)) {
         return $response->write('Page not found')->withStatus(404);
@@ -216,9 +274,35 @@ $app->get('/urls/{id}', function ($request, $response, $args) {
         'id' => $id,
         'url' => $url,
         'urls' => $urls,
+        'checks' => $checks,
         'flash' => $messages
     ];
 
     return $this->get('renderer')->render($response, 'urls/show.phtml', $params);
 })->setName('urls.show');
+
+//5. добавление новой проверки в список проверок и в бд
+$app->post('/urls/{id}/checks', function ($request, $response, $args) use ($router) {
+    $idUrl = $args['id'];
+    // $urls = getUrls($this->get('db'), $request) ?? [];
+    $dbUrls = $this->get('db');
+
+
+    $url = getUrlById($dbUrls, $idUrl);
+    $addCheck = addUrlCheck($this->get('db'), $idUrl);
+    if (!$addCheck) {
+        return "Error: Unable to insert URLCHECK.";
+    } 
+    $checks = getUrlChecksById($this->get('db'), $idUrl);
+    $messages = $this->get('flash')->getMessages();
+
+    $params = [
+        'id' => $idUrl,
+        'url' => $url,
+        'flash' => $messages,
+        'checks' => $checks
+    ];
+
+    return $this->get('renderer')->render($response, 'urls/show.phtml', $params);
+})->setName('url_checks.store');
 $app->run();
