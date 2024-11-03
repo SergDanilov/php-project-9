@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bootstrap demo</title>
+    <title>Мой анализатор СЕО - страница <?= htmlspecialchars($url['name']) ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   </head>
@@ -28,18 +28,23 @@
     </header>
     <main class="flex-grow-1">
       <div class="container-lg mt-3">
-        <?php if (!empty($flash)): ?>
-          <div class="alert alert-success" role="alert">
-            <?= $flash['success'][0]?>
-          </div>
-        <?php endif; ?>
+        <?php if (!empty($flash['success'])): ?>
+                <div class="alert alert-success" role="alert">
+                    <?= $flash['success'][0]?>
+                </div>
+          <?php elseif (!empty($flash['error'])): ?>
+                <div class="alert alert-danger" role="alert">
+                    <?= $flash['error'][0]?>
+                </div>
+            <?php endif; ?>
+        <?/*print_r($checks)*/?>
         <h1>Сайт: <?= htmlspecialchars($url['name']) ?></h1>
         <div class="table-responsive">
             <table class="table table-bordered table-hover text-nowrap" data-test="url">
                 <tbody>
                     <tr>
                         <td>ID</td>
-                        <!-- <td><?= htmlspecialchars($url['id']) ?></td> -->
+                        <td><?= htmlspecialchars($url['id']) ?></td>
                     </tr>
                     <tr>
                         <td>Имя</td>
@@ -67,6 +72,20 @@
                 </tr>
               </thead>
               <tbody>
+              <?php if(!empty($checks)):?>
+              <?php $numCheck = count($checks) ?>
+              <?php foreach ($checks as $check):?>
+                <tr>
+                  <td><?= htmlspecialchars($numCheck)?></td>
+                  <td></td>
+                  <td>h1</td>
+                  <td>title</td>
+                  <td>description</td>
+                  <td><?= $check['created_at'] ? date("d.m.Y h:m:s", strtotime($check['created_at'])) : '' ?></td>
+                </tr>
+                <?php $numCheck-- ?>
+              <?php endforeach; ?>
+              <?php endif; ?>
               </tbody>
             </table>
         </div>          
