@@ -81,7 +81,8 @@
                   <td>h1</td>
                   <td>title</td>
                   <td>description</td>
-                  <td><?= $check['created_at'] ? date("d.m.Y h:m:s", strtotime($check['created_at'])) : '' ?></td>
+                  <!-- <td><?= $check['created_at'] ? date("d.m.Y h:m:s", strtotime($check['created_at'])) : '' ?></td> -->
+                  <td><?= $check['created_at'] ?? '' ?></td>
                 </tr>
                 <?php $numCheck-- ?>
               <?php endforeach; ?>

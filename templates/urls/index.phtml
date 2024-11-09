@@ -38,7 +38,7 @@
                 </div>
             <?php endif; ?>
             <?/*print_r($urls)*/?>
-            <?var_dump($urlIdArray)?>
+            <?var_dump($checkData)?>
             <h1>Сайты</h1>
             <div class="table-responsive">
                 <table class="table table-bordered table-hover text-nowrap" data-test="urls">
@@ -55,7 +55,20 @@
                       <tr>
                         <td><?= $url['id'] ?></td>
                         <td><a href="/urls/<?= $url['id'] ?>"><?= htmlspecialchars($url['name']) ?></a></td>
-                        <td><?= $url['last_check'] ?? '' ?></td>
+                        <td>
+                        <?php
+                          // Массив для хранения дат проверок
+                          $checkDates = null;
+                          foreach ($checkData as $key => $value): 
+                              if ($key == $url['id']): 
+                                  $checkDates = $value;
+                              endif; 
+                          endforeach; 
+
+                          $lastCheckDate = $checkDates ? $checkDates : '';
+                        ?>
+                          <?= $lastCheckDate ? $lastCheckDate : '' ?>
+                        </td>
                         <td><?= $url['response_code'] ?? ''?></td>
                       </tr>
                     <?php endforeach; ?>

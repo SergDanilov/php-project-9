@@ -171,21 +171,31 @@ $app->get('/urls', function ($request, $response) {
     $urlsList = getUrls($this->get('db'), $request) ?? [];
     $messages = $this->get('flash')->getMessages();
     $urlIdArray = [];
+    $checks = getUrlChecks($this->get('db'));
     
-    foreach ($urlsList as $key => $value) {
-        $urlIdArray[] = $value['id'];
-    }
+    // foreach ($urlsList as $key => $value) {
+    //     $urlIdArray[] = $value['id'];
+    // }
 
-    foreach ($urlsList as $url) {
-        $dateFormat = Carbon::now()->toDateTimeString();
-        $url['created_at'] = $dateFormat;
-        $url['last_check'] = getLastCheckById($this->get('db'), $url['id']);
+    foreach ($urlsList as $key => $url) {
+        $checkDates = [];
+        foreach ($checks as $check){
+            if ($check['url_id'] == $url['id']){
+                // Добавляем дату проверки в массив
+                $checkDates[] = $check['created_at'];
+            } 
+        } 
+        // Если массив не пуст, получаем максимальную дату, иначе выводим пустую строку
+        $lastCheckDate = !empty($checkDates) ? max($checkDates) : '';
+        $checkData[$url['id']] = $lastCheckDate;
     }
 
     $params = [
       'urls' => $urlsList,
       'urlIdArray' => $urlIdArray,
-      'flash' => $messages
+      'flash' => $messages,
+      'checks' => $checks,
+      'checkData' => $checkData,
     ];
 
     return $this->get('renderer')->render($response, 'urls/index.phtml', $params);
