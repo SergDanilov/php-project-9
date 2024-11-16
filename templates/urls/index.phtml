@@ -57,17 +57,15 @@
                         <td><a href="/urls/<?= $url['id'] ?>"><?= htmlspecialchars($url['name']) ?></a></td>
                         <td>
                         <?php
-                          // Массив для хранения дат проверок
                           $checkDates = null;
                           foreach ($checkData as $key => $value): 
                               if ($key == $url['id']): 
                                   $checkDates = $value;
                               endif; 
                           endforeach; 
-
                           $lastCheckDate = $checkDates ? $checkDates : '';
                         ?>
-                          <?= $lastCheckDate ? $lastCheckDate : '' ?>
+                          <?= $lastCheckDate ?>
                         </td>
                         <td><?= $url['response_code'] ?? ''?></td>
                       </tr>
