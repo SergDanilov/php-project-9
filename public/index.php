@@ -15,6 +15,7 @@ use DI\Container;
 use App\Validator;
 use Psr\Container\ContainerInterface;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
 
 // Старт PHP сессии
 session_start();
@@ -173,10 +174,6 @@ $app->get('/urls', function ($request, $response) {
     $urlIdArray = [];
     $checks = getUrlChecks($this->get('db'));
     
-    // foreach ($urlsList as $key => $value) {
-    //     $urlIdArray[] = $value['id'];
-    // }
-
     foreach ($urlsList as $key => $url) {
         $checkDates = [];
         foreach ($checks as $check){
@@ -277,7 +274,7 @@ $app->get('/urls/{id}', function ($request, $response, $args) {
     if (!in_array($url, $urls)) {
         return $response->write('Page not found')->withStatus(404);
     }
-
+    
     $messages = $this->get('flash')->getMessages();
 
     $params = [
@@ -285,7 +282,7 @@ $app->get('/urls/{id}', function ($request, $response, $args) {
         'url' => $url,
         'urls' => $urls,
         'checks' => $checks,
-        'flash' => $messages
+        'flash' => $messages,
     ];
 
     return $this->get('renderer')->render($response, 'urls/show.phtml', $params);
@@ -306,11 +303,18 @@ $app->post('/urls/{id}/checks', function ($request, $response, $args) use ($rout
     $checks = getUrlChecksById($this->get('db'), $idUrl);
     $messages = $this->get('flash')->getMessages();
 
+    $pageAttributes = [];
+    $client = new Client();
+    $res = $client->request('GET', $url['name']);
+    $statusCode = $res->getStatusCode();
+    $pageAttributes['statusCode'] = $statusCode;
+
     $params = [
         'id' => $idUrl,
         'url' => $url,
         'flash' => $messages,
-        'checks' => $checks
+        'checks' => $checks,
+        'pageAttributes' => $pageAttributes,
     ];
 
     return $this->get('renderer')->render($response, 'urls/show.phtml', $params);
