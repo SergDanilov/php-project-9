@@ -67,7 +67,18 @@
                         ?>
                           <?= $lastCheckDate ?>
                         </td>
-                        <td><?= $url['response_code'] ?? ''?></td>
+                        <td>
+                        <?php
+                        $checkCodeResponse = null;
+                          foreach ( $checkStatusCode as $key => $value): 
+                              if ($key == $url['id']): 
+                                $checkCodeResponse = $value;
+                              endif; 
+                          endforeach; 
+                          $codeResponse = $checkCodeResponse ? $checkCodeResponse : '';
+                        ?>
+                        <?= $codeResponse ?>
+                        </td>
                       </tr>
                     <?php endforeach; ?>
                     </tbody>

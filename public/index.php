@@ -101,7 +101,7 @@ function addUrl($db, $url)
         // Если уникальный, добавляем новую запись.
         $stmt = $db->prepare("INSERT INTO urls (name) VALUES (:name)");
         $result = $stmt->execute([':name' => $url['name']]);
-        // добфавляем временно!! код ответа = 200
+        // добавляем временно!! код ответа = 200
         $stmt = $db->prepare("INSERT INTO urls (response_code) VALUES (:response_code)");
         $result = $stmt->execute([':response_code' => 200]);
 
@@ -117,16 +117,39 @@ function addUrl($db, $url)
         }
     }
 }
+
 // добавление проверки в бд
-function addUrlCheck($db, $urlId)
+function addUrlCheck($db, $urlId, $url)
 {
     
-        // добавляем новую проверку.
-        $stmt = $db->prepare("INSERT INTO url_checks (url_id) VALUES (:url_id)");
-        $result = $stmt->execute([':url_id' => $urlId]);
+    try {
+        // Создаем клиент для выполнения запроса
+        $client = new Client();
+        
+        // Отправляем GET-запрос
+        $res = $client->request('GET', $url['name']);
+        
+        // Получаем статус код
+        $statusCode = $res->getStatusCode();
 
-            // Получаем добавленную проверку
-        return $result; // Возвращаем добавленную проверку в случае успеха
+        // Подготавливаем запрос к базе данных
+        $stmt = $db->prepare("
+            INSERT INTO url_checks (url_id, status_code) VALUES (:url_id, :status_code)
+        ");
+        
+        // Выполняем запрос с параметрами
+        $result = $stmt->execute([
+            ':url_id' => $urlId,
+            ':status_code' => $statusCode
+        ]);
+
+        return $result; // Возвращаем результат выполнения запроса
+
+    } catch (Exception $e) {
+        // Логируем ошибку или обрабатываем ее соответствующим образом
+        error_log("Ошибка добавления проверки URL: " . $e->getMessage());
+        return false; // Возвращаем false в случае неуспеха
+    }
 }
 
 function getUrlById($db, $id)
@@ -145,9 +168,6 @@ function getUrlById($db, $id)
     }
 }
 /**********functions*********/
-
-
-
 
 
 
@@ -176,10 +196,12 @@ $app->get('/urls', function ($request, $response) {
     
     foreach ($urlsList as $key => $url) {
         $checkDates = [];
+        $checkStatusCode = [];
         foreach ($checks as $check){
             if ($check['url_id'] == $url['id']){
                 // Добавляем дату проверки в массив
                 $checkDates[] = $check['created_at'];
+                $checkStatusCode[$url['id']] = $check['status_code'];
             } 
         } 
         // Если массив не пуст, получаем максимальную дату, иначе выводим пустую строку
@@ -193,6 +215,7 @@ $app->get('/urls', function ($request, $response) {
       'flash' => $messages,
       'checks' => $checks,
       'checkData' => $checkData,
+      'checkStatusCode' => $checkStatusCode,
     ];
 
     return $this->get('renderer')->render($response, 'urls/index.phtml', $params);
@@ -288,6 +311,7 @@ $app->get('/urls/{id}', function ($request, $response, $args) {
     return $this->get('renderer')->render($response, 'urls/show.phtml', $params);
 })->setName('urls.show');
 
+
 //5. добавление новой проверки в список проверок и в бд
 $app->post('/urls/{id}/checks', function ($request, $response, $args) use ($router) {
     $idUrl = $args['id'];
@@ -296,27 +320,28 @@ $app->post('/urls/{id}/checks', function ($request, $response, $args) use ($rout
 
 
     $url = getUrlById($dbUrls, $idUrl);
-    $addCheck = addUrlCheck($this->get('db'), $idUrl);
+    $addCheck = addUrlCheck($this->get('db'), $idUrl, $url);
     if (!$addCheck) {
         return "Error: Unable to insert URLCHECK.";
     } 
     $checks = getUrlChecksById($this->get('db'), $idUrl);
     $messages = $this->get('flash')->getMessages();
 
-    $pageAttributes = [];
-    $client = new Client();
-    $res = $client->request('GET', $url['name']);
-    $statusCode = $res->getStatusCode();
-    $pageAttributes['statusCode'] = $statusCode;
+    // $pageAttributes = [];
+    // $client = new Client();
+    // $res = $client->request('GET', $url['name']);
+    // $statusCode = $res->getStatusCode();
+    // $pageAttributes['statusCode'] = $statusCode;
 
     $params = [
         'id' => $idUrl,
         'url' => $url,
         'flash' => $messages,
         'checks' => $checks,
-        'pageAttributes' => $pageAttributes,
+        // 'pageAttributes' => $pageAttributes,
     ];
 
     return $this->get('renderer')->render($response, 'urls/show.phtml', $params);
 })->setName('url_checks.store');
+//запускаем в работу
 $app->run();

@@ -77,8 +77,8 @@
               <?php $numCheck = count($checks) ?>
               <?php foreach ($checks as $check):?>
                 <tr>
-                  <td><?= htmlspecialchars($numCheck)?></td>
-                  <td><?= htmlspecialchars($pageAttributes['statusCode'])?></td>
+                  <td><?= htmlspecialchars($numCheck)?></td>               
+                  <td><?= htmlspecialchars($check['status_code'])?></td>
                   <td>h1</td>
                   <td>title</td>
                   <td>description</td>
