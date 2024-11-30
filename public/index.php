@@ -101,9 +101,6 @@ function addUrl($db, $url)
         // Если уникальный, добавляем новую запись.
         $stmt = $db->prepare("INSERT INTO urls (name) VALUES (:name)");
         $result = $stmt->execute([':name' => $url['name']]);
-        // добавляем временно!! код ответа = 200
-        $stmt = $db->prepare("INSERT INTO urls (response_code) VALUES (:response_code)");
-        $result = $stmt->execute([':response_code' => 200]);
 
         if ($result) {
             // Получаем добавленный URL
