@@ -133,7 +133,7 @@ function addUrl($db, $url)
 // добавление проверки в бд
 function addUrlCheck($db, $urlId, $url)
 {
-    
+
     try {
         //Получаем код ответа
         // Создаем клиент для выполнения запроса
@@ -172,9 +172,10 @@ function addUrlCheck($db, $urlId, $url)
 
         // Подготавливаем запрос к базе данных
         $stmt = $db->prepare("
-            INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at) VALUES (:url_id, :status_code, :h1, :title, :description, :created_at)
+            INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
+            VALUES (:url_id, :status_code, :h1, :title, :description, :created_at)
         ");
-        
+
         // Выполняем запрос с параметрами для внесения в базу
         $result = $stmt->execute([
             ':url_id' => $urlId,
@@ -184,9 +185,7 @@ function addUrlCheck($db, $urlId, $url)
             ':description' => $description,
             ':created_at' => $dateTime,
         ]);
-
         return $result; // Возвращаем результат выполнения запроса
-
     } catch (Exception $e) {
         // Логируем ошибку или обрабатываем ее соответствующим образом
         error_log("Ошибка добавления проверки URL: " . $e->getMessage());
@@ -212,8 +211,6 @@ function getUrlById($db, $id)
 /**********функции-окончание*********/
 
 
-
-
 //1. главная страница
 $app->get('/', function ($request, $response) use ($router) {
 
@@ -235,17 +232,17 @@ $app->get('/urls', function ($request, $response) {
     $messages = $this->get('flash')->getMessages();
     $urlIdArray = [];
     $checks = getUrlChecks($this->get('db'));
-    
+
     foreach ($urlsList as $key => $url) {
         $checkDates = [];
         $checkStatusCode = [];
         foreach ($checks as $check) {
-            if ($check['url_id'] == $url['id']){
+            if ($check['url_id'] == $url['id']) {
                 // Добавляем дату проверки в массив
                 $checkDates[] = $check['created_at'];
-            } 
+            }
             $checkStatusCode[$check['url_id']] = $check['status_code'];
-        } 
+        }
         // Если массив не пуст, получаем максимальную дату, иначе выводим пустую строку
         $lastCheckDate = !empty($checkDates) ? max($checkDates) : '';
         $checkData[$url['id']] = $lastCheckDate;
@@ -263,19 +260,15 @@ $app->get('/urls', function ($request, $response) {
     return $this->get('renderer')->render($response, 'urls/index.phtml', $params);
 })->setName('urls.index');
 
-
-
 //3. добавление нового урла в список страниц и в бд
 $app->post('/urls', function ($request, $response) use ($router) {
 
-    // $urls = getUrls($this->get('db'), $request) ?? [];
     $urlData = $request->getParsedBodyParam('url');
 
     $validator = new Validator();
     $errors = $validator->validate($urlData);
 
     if (count($errors) === 0) {
-        
         $urlsList = getUrls($this->get('db'), $request) ?? [];
         $newUrl = addUrl($this->get('db'), $urlData);
         $urlIdArray = [];
@@ -297,8 +290,6 @@ $app->post('/urls', function ($request, $response) use ($router) {
             $url = $router->urlFor('urls.show', $params);
             // Редирект на страницу конкретного урла с выводом сообщения: "Страница уже существует!"
             return $response->withRedirect($url);
-
-
         } else {
             $this->get('flash')->addMessage('success', 'Страница успешно добавлена :)');
         }
@@ -339,7 +330,7 @@ $app->get('/urls/{id}', function ($request, $response, $args) {
     if (!in_array($url, $urls)) {
         return $response->write('Page not found')->withStatus(404);
     }
-    
+
     $messages = $this->get('flash')->getMessages();
 
     $params = [
@@ -357,7 +348,6 @@ $app->get('/urls/{id}', function ($request, $response, $args) {
 //5. добавление новой проверки в список проверок и в бд
 $app->post('/urls/{id}/checks', function ($request, $response, $args) use ($router) {
     $idUrl = $args['id'];
-    // $urls = getUrls($this->get('db'), $request) ?? [];
     $dbUrls = $this->get('db');
 
 
@@ -365,7 +355,7 @@ $app->post('/urls/{id}/checks', function ($request, $response, $args) use ($rout
     $addCheck = addUrlCheck($this->get('db'), $idUrl, $url);
     if (!$addCheck) {
         return "Error: Unable to insert URLCHECK.";
-    } 
+    }
     $checks = getUrlChecksById($this->get('db'), $idUrl);
     $messages = $this->get('flash')->getMessages();
 
@@ -379,5 +369,6 @@ $app->post('/urls/{id}/checks', function ($request, $response, $args) use ($rout
 
     return $this->get('renderer')->render($response, 'urls/show.phtml', $params);
 })->setName('url_checks.store');
+
 //запускаем приложение в работу
 $app->run();
