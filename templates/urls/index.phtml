@@ -11,7 +11,7 @@
     <header class="flex-shrink-0">
       <nav class="navbar navbar-expand-md navbar-dark bg-dark px-3">
             <a class="navbar-brand" href="/">Анализатор страниц</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav"            aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
               <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
@@ -37,8 +37,9 @@
                     <?= $flash['error'][0]?>
                 </div>
             <?php endif; ?>
-            <?/*print_r($urls)*/?>
+            <?print_r($checkStatusCode)?>
             <?var_dump($checkData)?>
+            <?/*var_dump($checks)*/?>
             <h1>Сайты</h1>
             <div class="table-responsive">
                 <table class="table table-bordered table-hover text-nowrap" data-test="urls">
