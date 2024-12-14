@@ -16,12 +16,13 @@ use App\Validator;
 use Psr\Container\ContainerInterface;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
+use DiDom\Document;
 
 // Старт PHP сессии
 session_start();
 
 $container = new Container();
-// Database connection settings
+// Соединение с бд
 $container->set('db', function (ContainerInterface $c) {
     $settings = [
                     "driver" => "pgsql",
@@ -54,7 +55,7 @@ $router = $app->getRouteCollector()->getRouteParser();
 $app->addErrorMiddleware(true, true, true);
 $app->add(MethodOverrideMiddleware::class);
 
-/**********functions*********/
+/**********функции*********/
 function getUrls($db, $request)
 {
     $stmt = $db->query("SELECT * FROM urls ORDER BY created_at DESC");
@@ -99,8 +100,22 @@ function addUrl($db, $url)
         return $currentUrl;
     } else {
         // Если уникальный, добавляем новую запись.
-        $stmt = $db->prepare("INSERT INTO urls (name) VALUES (:name)");
-        $result = $stmt->execute([':name' => $url['name']]);
+        /*добавление даты и времени создания урла*/
+        $dateTime = Carbon::now();
+
+        //подготовка запроса
+        $stmt = $db->prepare("
+            INSERT INTO urls (name, created_at) VALUES (:name, :created_at)
+        ");
+
+        // Выполняем запрос с параметрами для внесения в базу
+        $result = $stmt->execute([
+            ':name' => $url['name'],
+            ':created_at' => $dateTime,
+        ]);
+
+        // $stmt = $db->prepare("INSERT INTO urls (name, ) VALUES (:name)");
+        // $result = $stmt->execute([':name' => $url['name']]);
 
         if ($result) {
             // Получаем добавленный URL
@@ -120,24 +135,54 @@ function addUrlCheck($db, $urlId, $url)
 {
     
     try {
+        //Получаем код ответа
         // Создаем клиент для выполнения запроса
         $client = new Client();
-        
         // Отправляем GET-запрос
         $res = $client->request('GET', $url['name']);
-        
         // Получаем статус код
         $statusCode = $res->getStatusCode();
 
+        // Получение тайтла из документа
+        $document = new Document($url['name'], true);
+        $titleElement = $document->first('head')->firstInDocument('title');
+        if (isset($titleElement)) {
+            $title = $titleElement->text();
+        } else {
+            $title = null;
+        }
+        /*получение дескрипшн из документа*/
+        $descriptionElement = $document->find('meta[name="description"]');
+        if (isset($descriptionElement)) {
+            foreach ($descriptionElement as $element) {
+                $description = $element->content;
+            }
+        } else {
+            $description = null;
+        }
+        /*получение H1 из документа*/
+        $h1Element = $document->first('body')->firstInDocument('h1');
+        if (isset($h1Element)) {
+            $h1 = $h1Element->text();
+        } else {
+            $h1 = null;
+        }
+        /*добавление даты и времени создания проверки*/
+        $dateTime = Carbon::now();
+
         // Подготавливаем запрос к базе данных
         $stmt = $db->prepare("
-            INSERT INTO url_checks (url_id, status_code) VALUES (:url_id, :status_code)
+            INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at) VALUES (:url_id, :status_code, :h1, :title, :description, :created_at)
         ");
         
-        // Выполняем запрос с параметрами
+        // Выполняем запрос с параметрами для внесения в базу
         $result = $stmt->execute([
             ':url_id' => $urlId,
-            ':status_code' => $statusCode
+            ':status_code' => $statusCode,
+            ':h1' => $h1,
+            ':title' => $title,
+            ':description' => $description,
+            ':created_at' => $dateTime,
         ]);
 
         return $result; // Возвращаем результат выполнения запроса
@@ -145,13 +190,13 @@ function addUrlCheck($db, $urlId, $url)
     } catch (Exception $e) {
         // Логируем ошибку или обрабатываем ее соответствующим образом
         error_log("Ошибка добавления проверки URL: " . $e->getMessage());
-        return false; // Возвращаем false в случае неуспеха
+        return false; // Возвращаем false в случае неудачи
     }
 }
 
 function getUrlById($db, $id)
 {
-    // Делаем выборку по ID
+    // Делаем выборку из базы по ID
     $stmt = $db->prepare("SELECT COUNT(*) FROM urls WHERE id = :id");
     $stmt->execute([':id' => $id]);
     $count = $stmt->fetchColumn();
@@ -164,7 +209,7 @@ function getUrlById($db, $id)
         return "Запись с ID = {$id} не найдена.";
     }
 }
-/**********functions*********/
+/**********функции-окончание*********/
 
 
 
@@ -194,12 +239,12 @@ $app->get('/urls', function ($request, $response) {
     foreach ($urlsList as $key => $url) {
         $checkDates = [];
         $checkStatusCode = [];
-        foreach ($checks as $check){
+        foreach ($checks as $check) {
             if ($check['url_id'] == $url['id']){
                 // Добавляем дату проверки в массив
                 $checkDates[] = $check['created_at'];
-                $checkStatusCode[$url['id']] = $check['status_code'];
             } 
+            $checkStatusCode[$check['url_id']] = $check['status_code'];
         } 
         // Если массив не пуст, получаем максимальную дату, иначе выводим пустую строку
         $lastCheckDate = !empty($checkDates) ? max($checkDates) : '';
@@ -324,21 +369,15 @@ $app->post('/urls/{id}/checks', function ($request, $response, $args) use ($rout
     $checks = getUrlChecksById($this->get('db'), $idUrl);
     $messages = $this->get('flash')->getMessages();
 
-    // $pageAttributes = [];
-    // $client = new Client();
-    // $res = $client->request('GET', $url['name']);
-    // $statusCode = $res->getStatusCode();
-    // $pageAttributes['statusCode'] = $statusCode;
 
     $params = [
         'id' => $idUrl,
         'url' => $url,
         'flash' => $messages,
         'checks' => $checks,
-        // 'pageAttributes' => $pageAttributes,
     ];
 
     return $this->get('renderer')->render($response, 'urls/show.phtml', $params);
 })->setName('url_checks.store');
-//запускаем в работу
+//запускаем приложение в работу
 $app->run();
