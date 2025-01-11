@@ -27,7 +27,7 @@ $container->set('db', function (ContainerInterface $c) {
     $settings = [
                     "driver" => "pgsql",
                     "host" => "postgres",
-                    "database" => "analyzer_db",
+                    "database" => "analyzer_db2",
                     "username" => "analyzer_user",
                     "password" => "analyzer_password",
                 ];
