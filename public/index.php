@@ -187,7 +187,7 @@ function addUrlCheck($db, $urlId, $url)
         ]);
         return $result; // Возвращаем результат выполнения запроса
     } catch (Exception $e) {
-        // Логируем ошибку или обрабатываем ее соответствующим образом
+        //Логируем ошибку или обрабатываем ее соответствующим образом
         error_log("Ошибка добавления проверки URL: " . $e->getMessage());
         return false; // Возвращаем false в случае неудачи
     }
@@ -354,7 +354,8 @@ $app->post('/urls/{id}/checks', function ($request, $response, $args) use ($rout
     $url = getUrlById($dbUrls, $idUrl);
     $addCheck = addUrlCheck($this->get('db'), $idUrl, $url);
     if (!$addCheck) {
-        return "Error: Unable to insert URLCHECK.";
+        $response->getBody()->write("Ошибка добавления проверки URL для {$url['name']}");
+        return $response->withStatus(500);
     }
     $checks = getUrlChecksById($this->get('db'), $idUrl);
     $messages = $this->get('flash')->getMessages();
