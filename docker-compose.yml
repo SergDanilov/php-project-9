@@ -1,0 +1,31 @@
+services:
+  web:
+    build:
+      context: ./docker/web
+    command: make start
+    ports:
+      - "8000:8000"
+    volumes:
+      - ".:/app"
+      - vendor_data:/var/www/vendor
+    networks:
+      - base
+
+  postgres:
+    image: postgres:11.2-alpine
+    environment:
+      POSTGRES_USER: analyzer_user
+      POSTGRES_PASSWORD: analyzer_password
+      POSTGRES_DB: analyzer_db2
+    ports:
+      - "5432:5432"
+    networks:
+      - base
+
+volumes:
+  vendor_data:
+
+networks:
+  base:
+    driver: bridge
+
