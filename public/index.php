@@ -114,9 +114,6 @@ function addUrl($db, $url)
             ':created_at' => $dateTime,
         ]);
 
-        // $stmt = $db->prepare("INSERT INTO urls (name, ) VALUES (:name)");
-        // $result = $stmt->execute([':name' => $url['name']]);
-
         if ($result) {
             // Получаем добавленный URL
             $stmt = $db->prepare("SELECT * FROM urls WHERE name = :name");
@@ -135,7 +132,7 @@ function addUrlCheck($db, $urlId, $url)
 {
 
     try {
-        //Получаем код ответа
+        // Получаем код ответа
         // Создаем клиент для выполнения запроса
         $client = new Client();
         // Отправляем GET-запрос
@@ -151,7 +148,7 @@ function addUrlCheck($db, $urlId, $url)
         } else {
             $title = null;
         }
-        /*получение дескрипшн из документа*/
+        // Получение дескрипшн из документа
         $descriptionElement = $document->find('meta[name="description"]');
         if (isset($descriptionElement)) {
             foreach ($descriptionElement as $element) {
@@ -160,14 +157,14 @@ function addUrlCheck($db, $urlId, $url)
         } else {
             $description = null;
         }
-        /*получение H1 из документа*/
+        // Получение H1 из документа
         $h1Element = $document->first('body')->firstInDocument('h1');
         if (isset($h1Element)) {
             $h1 = $h1Element->text();
         } else {
             $h1 = null;
         }
-        /*добавление даты и времени создания проверки*/
+        // Добавление даты и времени создания проверки
         $dateTime = Carbon::now();
 
         // Подготавливаем запрос к базе данных
