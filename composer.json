@@ -1,5 +1,5 @@
 {
-    "name": "hexlet/name",
+    "name": "hexlet/code",
     "description": "Page analyzer – a site that analyzes specified pages for SEO suitability, similar to PageSpeedInsights.",
     "autoload": {
         "psr-4": {
