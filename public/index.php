@@ -9,6 +9,7 @@ if (file_exists($autoloadPath1)) {
     require_once $autoloadPath2;
 }
 
+
 use Slim\Factory\AppFactory;
 use Slim\Middleware\MethodOverrideMiddleware;
 use DI\Container;
@@ -23,14 +24,18 @@ use DiDom\Document;
 session_start();
 
 $container = new Container();
+
+$dotenv = Dotenv\Dotenv::createImmutable('/');
+$dotenv->load();
+
 // Соединение с бд
 $container->set('db', function (ContainerInterface $c) {
     $settings = [
-                    "driver" => "pgsql",
-                    "host" => "postgres",
-                    "database" => "analyzer_db",
-                    "username" => "analyzer_user",
-                    "password" => "analyzer_password",
+                    "driver" => $_ENV['DB_DRIVER'],
+                    "host" => $_ENV['DB_HOST'],
+                    "database" => $_ENV['DB_DATABASE'],
+                    "username" => $_ENV['DB_USERNAME'],
+                    "password" => $_ENV['DB_PASSWORD'],
                 ];
 
     $dsn = "{$settings['driver']}:host={$settings['host']};dbname={$settings['database']}";
