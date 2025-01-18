@@ -25,7 +25,7 @@ session_start();
 
 $container = new Container();
 
-$dotenv = Dotenv\Dotenv::createImmutable('/');
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
 // Соединение с бд

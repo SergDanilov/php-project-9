@@ -1,4 +1,6 @@
 -- Создание таблицы urls
+GRANT ALL PRIVILEGES ON TABLE urls TO analyzer_user;
+DROP TABLE IF EXISTS urls;
 CREATE TABLE urls (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -14,6 +16,7 @@ ALTER TABLE urls
     ADD COLUMN last_check TIMESTAMP;
 
 -- Создание таблицы url_checks
+DROP TABLE IF EXISTS url_checks;
 CREATE TABLE url_checks (
     id SERIAL PRIMARY KEY,
     url_id INTEGER REFERENCES urls(id) ON DELETE CASCADE, 
