@@ -30,22 +30,34 @@ $dotenv->load();
 
 // Соединение с бд
 $container->set('db', function (ContainerInterface $c) {
-    $settings = [
-                    "driver" => $_ENV['DB_DRIVER'],
-                    "host" => $_ENV['DB_HOST'],
-                    "database" => $_ENV['DB_DATABASE'],
-                    "username" => $_ENV['DB_USERNAME'],
-                    "password" => $_ENV['DB_PASSWORD'],
-                ];
+    // Получаем строку подключения из переменной окружения
+    $databaseUrl = $_ENV['DATABASE_URL'];
 
-    $dsn = "{$settings['driver']}:host={$settings['host']};dbname={$settings['database']}";
+    // Разбираем строку подключения
+    $parts = parse_url($databaseUrl);
+    if ($parts === false) {
+        throw new InvalidArgumentException('Invalid DATABASE_URL');
+    }
+
+    // Формируем DSN для PDO
+    $dsn = sprintf(
+        "pgsql:host=%s;port=%d;dbname=%s",
+        $parts['host'],
+        $parts['port'],
+        ltrim($parts['path'], '/')
+    );
+
+    // Опции для PDO
     $options = [
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES   => false,
     ];
-    return new PDO($dsn, $settings['username'], $settings['password'], $options);
+
+    // Создаем подключение
+    return new PDO($dsn, $parts['user'], $parts['pass'], $options);
 });
+
 $container->set('renderer', function () {
     // Параметром передается базовая директория, в которой будут храниться шаблоны
     return new \Slim\Views\PhpRenderer(__DIR__ . '/../templates');
