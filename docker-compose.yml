@@ -22,7 +22,7 @@ services:
     networks:
       - base
     volumes:
-    - ./docker/postgres/data:/var/lib/postgresql/data
+      - ./docker/postgres/data:/var/lib/postgresql/data
 
 volumes:
   vendor_data:
