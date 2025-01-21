@@ -8,7 +8,8 @@ if (file_exists($autoloadPath1)) {
 } else {
     require_once $autoloadPath2;
 }
-
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
+$dotenv->load();
 
 use Slim\Factory\AppFactory;
 use Slim\Middleware\MethodOverrideMiddleware;
@@ -25,8 +26,7 @@ session_start();
 
 $container = new Container();
 
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
-$dotenv->load();
+
 
 // Соединение с бд
 $container->set('db', function (ContainerInterface $c) {
