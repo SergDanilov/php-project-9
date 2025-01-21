@@ -16,7 +16,7 @@ services:
     environment:
       POSTGRES_USER: analyzer_user
       POSTGRES_PASSWORD: analyzer_password
-      POSTGRES_DB: analyzer_db
+      POSTGRES_DB: analyzer_password
     ports:
       - "5432:5432"
     networks:
