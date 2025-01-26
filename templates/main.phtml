@@ -47,14 +47,13 @@
                 <div class="col-8">
                   <label for="text" class="visually-hidden">Url для проверки</label>
                   <input type="text" name="url[name]" value="" class="form-control form-control-lg<?php if (isset($errors)):?> is-invalid<?php endif; ?>" placeholder="<?= $placeholder ?>">
-                  <?php if (isset($errors)):
-                    foreach($errors as $key => $value) {
-                      $mess = $value;
-                      if ($key != 'url'):?>
-                        <p style="color: red"><?= $mess ?></p>
-                      <?php endif; ?>
-                    <?}?>
-                  <?php endif; ?>
+                    <?php if (isset($errors)): ?>
+                      <?php foreach($errors as $key => $value): ?>
+                          <?php if ($key != 'url'): ?>
+                              <p style="color: red"><?= $value ?></p>
+                          <?php endif; ?>
+                      <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
                 <div class="col-2">
                   <input type="submit" class="btn btn-primary btn-lg ms-3 px-5 text-uppercase mx-3" value="Проверить"> 
