@@ -15,7 +15,7 @@ ALTER TABLE urls
     ADD COLUMN description TEXT,
     ADD COLUMN last_check TIMESTAMP;
 
--- Создание таблицы url_checks
+
 DROP TABLE IF EXISTS url_checks;
 CREATE TABLE url_checks (
     id SERIAL PRIMARY KEY,
