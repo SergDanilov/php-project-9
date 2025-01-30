@@ -1,6 +1,6 @@
 -- Создание таблицы urls
 GRANT ALL PRIVILEGES ON TABLE urls TO analyzer_user;
-DROP TABLE IF EXISTS urls;
+DROP TABLE IF EXISTS urls CASCADE;
 
 CREATE TABLE urls (
     id SERIAL PRIMARY KEY,
@@ -14,7 +14,7 @@ CREATE TABLE urls (
 );
 
 -- Создание таблицы url_checks
-DROP TABLE IF EXISTS url_checks;
+DROP TABLE IF EXISTS url_checks CASCADE;
 CREATE TABLE url_checks (
     id SERIAL PRIMARY KEY,
     url_id INTEGER,
