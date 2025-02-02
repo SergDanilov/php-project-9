@@ -23,5 +23,3 @@ CREATE TABLE url_checks (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (url_id) REFERENCES urls(id) ON DELETE CASCADE  -- Добавляем ограничение внешнего ключа
 );
-
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO analyzer_user;
