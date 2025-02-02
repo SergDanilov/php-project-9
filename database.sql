@@ -1,7 +1,5 @@
 -- Создание таблицы urls
-GRANT ALL PRIVILEGES ON TABLE urls TO analyzer_user;
 DROP TABLE IF EXISTS urls CASCADE;
-
 CREATE TABLE urls (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -25,3 +23,5 @@ CREATE TABLE url_checks (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (url_id) REFERENCES urls(id) ON DELETE CASCADE  -- Добавляем ограничение внешнего ключа
 );
+
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO analyzer_user;
