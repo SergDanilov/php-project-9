@@ -217,6 +217,8 @@ $app->post('/urls/{id}/checks', function ($request, $response, $args) use ($rout
     if (!$addCheck) {
         $response->getBody()->write("Ошибка добавления проверки URL для {$url['name']}");
         return $response->withStatus(500);
+    } else {
+        $this->get('flash')->addMessage('success', 'Страница успешно проверена');
     }
     $checks = $dataBase->getUrlChecksById($this->get('db'), $idUrl);
     $messages = $this->get('flash')->getMessages();
