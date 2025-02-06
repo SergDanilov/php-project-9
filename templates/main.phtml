@@ -46,7 +46,7 @@
               <form action="/urls" method="post" class="row" required>
                 <div class="col-8">
                   <label for="text" class="visually-hidden">Url для проверки</label>
-                  <input type="text" name="url[name]" value="" class="form-control form-control-lg<?php if (isset($errors)):?> is-invalid<?php endif; ?>" placeholder="<?= $placeholder ?>">
+                  <input type="text" required name="url[name]" value="" class="form-control form-control-lg<?php if (isset($errors)):?> is-invalid<?php endif; ?>" placeholder="<?= $placeholder ?>">
                     <?php if (isset($errors)): ?>
                       <?php foreach($errors as $key => $value): ?>
                           <?php if ($key != 'url'): ?>
@@ -56,7 +56,7 @@
                     <?php endif; ?>
                 </div>
                 <div class="col-2">
-                  <input type="submit" class="btn btn-primary btn-lg ms-3 px-5 text-uppercase mx-3" value="Проверить"> 
+                  <input type="submit" required class="btn btn-primary btn-lg ms-3 px-5 text-uppercase mx-3" value="Проверить"> 
                 </div>   
               </form>
           </div>
