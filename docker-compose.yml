@@ -23,8 +23,6 @@ services:
       - base
     volumes:
       - ./docker/postgres/data:/var/lib/postgresql/data  # Для данных
-      - ./var/lib/postgresql/data/postgresql.conf:/etc/postgresql/12/main/postgresql.conf  # Монтируем конфиг
-      - ./var/lib/postgresql/data/pg_hba.conf:/etc/postgresql/12/main/pg_hba.conf  # Монтируем конфиг
 volumes:
   vendor_data:
 
