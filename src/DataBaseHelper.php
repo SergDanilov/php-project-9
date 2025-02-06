@@ -8,7 +8,7 @@ use GuzzleHttp\Client;
 
 class DataBaseHelper
 {
-    public function getUrls($db, $request)
+    public function getUrls($db)
     {
         $stmt = $db->query("SELECT * FROM urls ORDER BY created_at DESC");
         $urls = $stmt->fetchAll();

@@ -16,7 +16,6 @@ use App\DataBaseHelper;
 use App\Validator;
 use Psr\Container\ContainerInterface;
 use Carbon\Carbon;
-use GuzzleHttp\Client;
 use DiDom\Document;
 
 // Старт PHP сессии
@@ -28,7 +27,7 @@ $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
 // Соединение с бд
-$container->set('db', function (ContainerInterface $c) {
+$container->set('db', function () {
     // Получаем строку подключения из переменной окружения
     $databaseUrl = $_ENV['DATABASE_URL'];
 
@@ -73,7 +72,7 @@ $app->addErrorMiddleware(true, true, true);
 $app->add(MethodOverrideMiddleware::class);
 
 //1. главная страница
-$app->get('/', function ($request, $response) use ($router) {
+$app->get('/', function (ServerRequest $request, Response $response) use ($router) {
 
     $messages = $this->get('flash')->getMessages();
     $params = [
@@ -85,10 +84,10 @@ $app->get('/', function ($request, $response) use ($router) {
 })->setName('main');
 
 //2. список страниц
-$app->get('/urls', function ($request, $response) {
+$app->get('/urls', function (ServerRequest $request, Response $response) {
 
     $dataBase = new DataBaseHelper();
-    $urlsList = $dataBase->getUrls($this->get('db'), $request) ?? [];
+    $urlsList = $dataBase->getUrls($this->get('db')) ?? [];
     $messages = $this->get('flash')->getMessages();
     $urlIdArray = [];
     $checks = $dataBase->getUrlChecks($this->get('db'));
@@ -121,7 +120,7 @@ $app->get('/urls', function ($request, $response) {
 })->setName('urls.index');
 
 //3. добавление нового урла в список страниц и в бд
-$app->post('/urls', function ($request, $response) use ($router) {
+$app->post('/urls', function (ServerRequest $request, Response $response) use ($router) {
 
     $urlData = $request->getParsedBodyParam('url');
     $dataBase = new DataBaseHelper();
@@ -129,7 +128,7 @@ $app->post('/urls', function ($request, $response) use ($router) {
     $errors = $validator->validate($urlData);
 
     if (count($errors) === 0) {
-        $urlsList = $dataBase->getUrls($this->get('db'), $request) ?? [];
+        $urlsList = $dataBase->getUrls($this->get('db')) ?? [];
         $newUrl = $dataBase->addUrl($this->get('db'), $urlData);
         $urlIdArray = [];
         foreach ($urlsList as $key => $value) {
@@ -179,11 +178,11 @@ $app->post('/urls', function ($request, $response) use ($router) {
 
 
 //4. отображение конкретной страницы
-$app->get('/urls/{id}', function ($request, $response, $args) {
+$app->get('/urls/{id:\d+}', function (ServerRequest $request, Response $response, $args) {
 
     $id = $args['id'];
     $dataBase = new DataBaseHelper();
-    $urls = $dataBase->getUrls($this->get('db'), $request) ?? [];
+    $urls = $dataBase->getUrls($this->get('db')) ?? [];
     $dbUrls = $this->get('db');
     $url = $dataBase->getUrlById($dbUrls, $id);
     $checks = $dataBase->getUrlChecksById($this->get('db'), $id);
@@ -207,7 +206,7 @@ $app->get('/urls/{id}', function ($request, $response, $args) {
 
 
 //5. добавление новой проверки в список проверок и в бд
-$app->post('/urls/{id}/checks', function ($request, $response, $args) use ($router) {
+$app->post('/urls/{id:\d+}/checks', function (ServerRequest $request, Response $response, $args) use ($router) {
     $idUrl = $args['id'];
     $dbUrls = $this->get('db');
     $dataBase = new DataBaseHelper();
