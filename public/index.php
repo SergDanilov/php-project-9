@@ -10,13 +10,16 @@ if (file_exists($autoloadPath1)) {
 }
 
 use Slim\Factory\AppFactory;
+use Slim\Http\ServerRequest;
+use Slim\Http\Response;
 use Slim\Middleware\MethodOverrideMiddleware;
 use DI\Container;
 use App\DataBaseHelper;
 use App\Validator;
-use Psr\Container\ContainerInterface;
-use Carbon\Carbon;
-use DiDom\Document;
+use Illuminate\Support;
+// use Psr\Container\ContainerInterface;
+// use Carbon\Carbon;
+// use DiDom\Document;
 
 // Старт PHP сессии
 session_start();
@@ -84,36 +87,54 @@ $app->get('/', function (ServerRequest $request, Response $response) use ($route
 })->setName('main');
 
 //2. список страниц
-$app->get('/urls', function (ServerRequest $request, Response $response) {
+// $app->get('/urls', function (ServerRequest $request, Response $response) {
 
+//     $dataBase = new DataBaseHelper();
+//     $urlsList = $dataBase->getUrls($this->get('db')) ?? [];
+//     $messages = $this->get('flash')->getMessages();
+//     $urlIdArray = [];
+//     $checks = $dataBase->getUrlChecks($this->get('db'));
+
+//     foreach ($urlsList as $key => $url) {
+//         $checkDates = [];
+//         $checkStatusCode = [];
+//         foreach ($checks as $check) {
+//             if ($check['url_id'] == $url['id']) {
+//                 // Добавляем дату проверки в массив
+//                 $checkDates[] = $check['created_at'];
+//             }
+//             $checkStatusCode[$check['url_id']] = $check['status_code'];
+//         }
+//         // Если массив не пуст, получаем максимальную дату, иначе выводим пустую строку
+//         $lastCheckDate = !empty($checkDates) ? max($checkDates) : '';
+//         $checkData[$url['id']] = $lastCheckDate;
+//     }
+
+//     $params = [
+//       'urls' => $urlsList,
+//       'urlIdArray' => $urlIdArray,
+//       'flash' => $messages,
+//       'checks' => $checks,
+//       'checkData' => $checkData,
+//       'checkStatusCode' => $checkStatusCode,
+//     ];
+
+//     return $this->get('renderer')->render($response, 'urls/index.phtml', $params);
+// })->setName('urls.index');
+
+$app->get('/urls', function (ServerRequest $request, Response $response) {
     $dataBase = new DataBaseHelper();
     $urlsList = $dataBase->getUrls($this->get('db')) ?? [];
     $messages = $this->get('flash')->getMessages();
-    $urlIdArray = [];
-    $checks = $dataBase->getUrlChecks($this->get('db'));
 
-    foreach ($urlsList as $key => $url) {
-        $checkDates = [];
-        $checkStatusCode = [];
-        foreach ($checks as $check) {
-            if ($check['url_id'] == $url['id']) {
-                // Добавляем дату проверки в массив
-                $checkDates[] = $check['created_at'];
-            }
-            $checkStatusCode[$check['url_id']] = $check['status_code'];
-        }
-        // Если массив не пуст, получаем максимальную дату, иначе выводим пустую строку
-        $lastCheckDate = !empty($checkDates) ? max($checkDates) : '';
-        $checkData[$url['id']] = $lastCheckDate;
-    }
+    // Получаем последние проверки для каждого URL одним запросом
+    $lastChecks = $dataBase->getLastUrlChecks($this->get('db')) ?? [];
+    $lastChecksByUrlId = Support\Arr::keyBy($lastChecks, 'url_id');
 
     $params = [
-      'urls' => $urlsList,
-      'urlIdArray' => $urlIdArray,
-      'flash' => $messages,
-      'checks' => $checks,
-      'checkData' => $checkData,
-      'checkStatusCode' => $checkStatusCode,
+        'urls' => $urlsList,
+        'flash' => $messages,
+        'lastChecks' => $lastChecksByUrlId,
     ];
 
     return $this->get('renderer')->render($response, 'urls/index.phtml', $params);
