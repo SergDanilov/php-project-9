@@ -158,11 +158,11 @@ class DataBaseHelper
         }
     }
 
-    public function getLastUrlChecks($pdo) {
+    public function getLastUrlChecks($pdo)
+    {
         $sql = "SELECT DISTINCT ON (url_id) url_id, created_at, status_code 
                 FROM url_checks 
                 ORDER BY url_id, created_at DESC";
-        
         $stmt = $pdo->query($sql);
         return $stmt->fetchAll();
     }
