@@ -21,7 +21,8 @@
         "nesbot/carbon": "^3.7",
         "guzzlehttp/guzzle": "^7.0",
         "imangazaliev/didom": "^2.0",
-        "vlucas/phpdotenv": "^5.6"
+        "vlucas/phpdotenv": "^5.6",
+        "illuminate/support": "^11.41"
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "^3.10",
