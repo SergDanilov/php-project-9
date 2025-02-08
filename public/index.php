@@ -9,16 +9,17 @@ if (file_exists($autoloadPath1)) {
     require_once $autoloadPath2;
 }
 
-
 use Slim\Factory\AppFactory;
+use Slim\Http\ServerRequest;
+use Slim\Http\Response;
 use Slim\Middleware\MethodOverrideMiddleware;
 use DI\Container;
 use App\DataBaseHelper;
 use App\Validator;
-use Psr\Container\ContainerInterface;
-use Carbon\Carbon;
-use GuzzleHttp\Client;
-use DiDom\Document;
+use Illuminate\Support;
+// use Psr\Container\ContainerInterface;
+// use Carbon\Carbon;
+// use DiDom\Document;
 
 // Старт PHP сессии
 session_start();
@@ -29,7 +30,7 @@ $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
 // Соединение с бд
-$container->set('db', function (ContainerInterface $c) {
+$container->set('db', function () {
     // Получаем строку подключения из переменной окружения
     $databaseUrl = $_ENV['DATABASE_URL'];
 
@@ -74,7 +75,7 @@ $app->addErrorMiddleware(true, true, true);
 $app->add(MethodOverrideMiddleware::class);
 
 //1. главная страница
-$app->get('/', function ($request, $response) use ($router) {
+$app->get('/', function (ServerRequest $request, Response $response) use ($router) {
 
     $messages = $this->get('flash')->getMessages();
     $params = [
@@ -86,43 +87,61 @@ $app->get('/', function ($request, $response) use ($router) {
 })->setName('main');
 
 //2. список страниц
-$app->get('/urls', function ($request, $response) {
+// $app->get('/urls', function (ServerRequest $request, Response $response) {
 
+//     $dataBase = new DataBaseHelper();
+//     $urlsList = $dataBase->getUrls($this->get('db')) ?? [];
+//     $messages = $this->get('flash')->getMessages();
+//     $urlIdArray = [];
+//     $checks = $dataBase->getUrlChecks($this->get('db'));
+
+//     foreach ($urlsList as $key => $url) {
+//         $checkDates = [];
+//         $checkStatusCode = [];
+//         foreach ($checks as $check) {
+//             if ($check['url_id'] == $url['id']) {
+//                 // Добавляем дату проверки в массив
+//                 $checkDates[] = $check['created_at'];
+//             }
+//             $checkStatusCode[$check['url_id']] = $check['status_code'];
+//         }
+//         // Если массив не пуст, получаем максимальную дату, иначе выводим пустую строку
+//         $lastCheckDate = !empty($checkDates) ? max($checkDates) : '';
+//         $checkData[$url['id']] = $lastCheckDate;
+//     }
+
+//     $params = [
+//       'urls' => $urlsList,
+//       'urlIdArray' => $urlIdArray,
+//       'flash' => $messages,
+//       'checks' => $checks,
+//       'checkData' => $checkData,
+//       'checkStatusCode' => $checkStatusCode,
+//     ];
+
+//     return $this->get('renderer')->render($response, 'urls/index.phtml', $params);
+// })->setName('urls.index');
+
+$app->get('/urls', function (ServerRequest $request, Response $response) {
     $dataBase = new DataBaseHelper();
-    $urlsList = $dataBase->getUrls($this->get('db'), $request) ?? [];
+    $urlsList = $dataBase->getUrls($this->get('db')) ?? [];
     $messages = $this->get('flash')->getMessages();
-    $urlIdArray = [];
-    $checks = $dataBase->getUrlChecks($this->get('db'));
 
-    foreach ($urlsList as $key => $url) {
-        $checkDates = [];
-        $checkStatusCode = [];
-        foreach ($checks as $check) {
-            if ($check['url_id'] == $url['id']) {
-                // Добавляем дату проверки в массив
-                $checkDates[] = $check['created_at'];
-            }
-            $checkStatusCode[$check['url_id']] = $check['status_code'];
-        }
-        // Если массив не пуст, получаем максимальную дату, иначе выводим пустую строку
-        $lastCheckDate = !empty($checkDates) ? max($checkDates) : '';
-        $checkData[$url['id']] = $lastCheckDate;
-    }
+    // Получаем последние проверки для каждого URL одним запросом
+    $lastChecks = $dataBase->getLastUrlChecks($this->get('db')) ?? [];
+    $lastChecksByUrlId = Support\Arr::keyBy($lastChecks, 'url_id');
 
     $params = [
-      'urls' => $urlsList,
-      'urlIdArray' => $urlIdArray,
-      'flash' => $messages,
-      'checks' => $checks,
-      'checkData' => $checkData,
-      'checkStatusCode' => $checkStatusCode,
+        'urls' => $urlsList,
+        'flash' => $messages,
+        'lastChecks' => $lastChecksByUrlId,
     ];
 
     return $this->get('renderer')->render($response, 'urls/index.phtml', $params);
 })->setName('urls.index');
 
 //3. добавление нового урла в список страниц и в бд
-$app->post('/urls', function ($request, $response) use ($router) {
+$app->post('/urls', function (ServerRequest $request, Response $response) use ($router) {
 
     $urlData = $request->getParsedBodyParam('url');
     $dataBase = new DataBaseHelper();
@@ -130,7 +149,7 @@ $app->post('/urls', function ($request, $response) use ($router) {
     $errors = $validator->validate($urlData);
 
     if (count($errors) === 0) {
-        $urlsList = $dataBase->getUrls($this->get('db'), $request) ?? [];
+        $urlsList = $dataBase->getUrls($this->get('db')) ?? [];
         $newUrl = $dataBase->addUrl($this->get('db'), $urlData);
         $urlIdArray = [];
         foreach ($urlsList as $key => $value) {
@@ -180,11 +199,11 @@ $app->post('/urls', function ($request, $response) use ($router) {
 
 
 //4. отображение конкретной страницы
-$app->get('/urls/{id}', function ($request, $response, $args) {
+$app->get('/urls/{id:\d+}', function (ServerRequest $request, Response $response, $args) {
 
     $id = $args['id'];
     $dataBase = new DataBaseHelper();
-    $urls = $dataBase->getUrls($this->get('db'), $request) ?? [];
+    $urls = $dataBase->getUrls($this->get('db')) ?? [];
     $dbUrls = $this->get('db');
     $url = $dataBase->getUrlById($dbUrls, $id);
     $checks = $dataBase->getUrlChecksById($this->get('db'), $id);
@@ -208,7 +227,7 @@ $app->get('/urls/{id}', function ($request, $response, $args) {
 
 
 //5. добавление новой проверки в список проверок и в бд
-$app->post('/urls/{id}/checks', function ($request, $response, $args) use ($router) {
+$app->post('/urls/{id:\d+}/checks', function (ServerRequest $request, Response $response, $args) use ($router) {
     $idUrl = $args['id'];
     $dbUrls = $this->get('db');
     $dataBase = new DataBaseHelper();
@@ -218,6 +237,8 @@ $app->post('/urls/{id}/checks', function ($request, $response, $args) use ($rout
     if (!$addCheck) {
         $response->getBody()->write("Ошибка добавления проверки URL для {$url['name']}");
         return $response->withStatus(500);
+    } else {
+        $this->get('flash')->addMessage('success', 'Страница успешно проверена');
     }
     $checks = $dataBase->getUrlChecksById($this->get('db'), $idUrl);
     $messages = $this->get('flash')->getMessages();

@@ -8,7 +8,7 @@ use GuzzleHttp\Client;
 
 class DataBaseHelper
 {
-    public function getUrls($db, $request)
+    public function getUrls($db)
     {
         $stmt = $db->query("SELECT * FROM urls ORDER BY created_at DESC");
         $urls = $stmt->fetchAll();
@@ -156,5 +156,14 @@ class DataBaseHelper
         } else {
             return "Запись с ID = {$id} не найдена.";
         }
+    }
+
+    public function getLastUrlChecks($pdo)
+    {
+        $sql = "SELECT DISTINCT ON (url_id) url_id, created_at, status_code 
+                FROM url_checks 
+                ORDER BY url_id, created_at DESC";
+        $stmt = $pdo->query($sql);
+        return $stmt->fetchAll();
     }
 }

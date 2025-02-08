@@ -1,7 +1,7 @@
 services:
   web:
     build:
-      context: ./docker/web
+      context: ./
     command: make start
     ports:
       - "8000:8000"
@@ -16,14 +16,13 @@ services:
     environment:
       POSTGRES_USER: analyzer_user
       POSTGRES_PASSWORD: analyzer_password
-      POSTGRES_DB: analyzer_db
+      POSTGRES_DB: database_9
     ports:
       - "5432:5432"
     networks:
       - base
     volumes:
-      - ./docker/postgres/data:/var/lib/postgresql/data
-
+      - ./docker/postgres/data:/var/lib/postgresql/data  # Для данных
 volumes:
   vendor_data:
 

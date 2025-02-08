@@ -1,28 +1,25 @@
 -- Создание таблицы urls
-GRANT ALL PRIVILEGES ON TABLE urls TO analyzer_user;
-DROP TABLE IF EXISTS urls;
+DROP TABLE IF EXISTS urls CASCADE;
 CREATE TABLE urls (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    response_code INT,
+    h1 VARCHAR(255),
+    title VARCHAR(255),
+    description TEXT,
+    last_check TIMESTAMP
 );
 
--- Добавление столбцов в таблицу urls
-ALTER TABLE urls
-    ADD COLUMN response_code INT,
-    ADD COLUMN h1 VARCHAR(255),
-    ADD COLUMN title VARCHAR(255),
-    ADD COLUMN description TEXT,
-    ADD COLUMN last_check TIMESTAMP;
-
 -- Создание таблицы url_checks
-DROP TABLE IF EXISTS url_checks;
+DROP TABLE IF EXISTS url_checks CASCADE;
 CREATE TABLE url_checks (
     id SERIAL PRIMARY KEY,
-    url_id INTEGER REFERENCES urls(id) ON DELETE CASCADE, 
+    url_id INTEGER,
     status_code INT,
     h1 VARCHAR(255),
     title VARCHAR(255),
     description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (url_id) REFERENCES urls(id) ON DELETE CASCADE  -- Добавляем ограничение внешнего ключа
 );
