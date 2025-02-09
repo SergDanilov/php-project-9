@@ -160,4 +160,4 @@ class DataBaseHelper
         $stmt = $db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-}                            
+}
