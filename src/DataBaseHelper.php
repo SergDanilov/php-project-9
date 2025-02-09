@@ -82,7 +82,6 @@ class DataBaseHelper
                 $url = ['name' => $url];
             }
 
-            // Проверяем, существует ли ключ 'name' в массиве
             if (!isset($url['name'])) {
                 throw new \InvalidArgumentException("Ключ 'name' отсутствует в массиве или URL неверно указан.");
             }
@@ -154,7 +153,7 @@ class DataBaseHelper
         // Проверяем, существует ли уже запись с данным ID
         if ($count > 0) {
             $stmt = $db->query("SELECT * FROM urls WHERE id = $id");
-            $urlData = $stmt->fetch();
+            $urlData = $stmt->fetchAll();
             return $urlData;
         } else {
             return "Запись с ID = {$id} не найдена.";

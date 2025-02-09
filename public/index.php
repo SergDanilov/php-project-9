@@ -220,7 +220,7 @@ $app->post('/urls/{id:\d+}/checks', function (ServerRequest $request, Response $
         $url = $router->urlFor('urls.show', $params);
         return $response->withRedirect($url);
     }
-    return $this->get('renderer')->render($response->withStatus(422), 'urls_show.phtml', $params);
+    // return $this->get('renderer')->render($response->withStatus(422), 'urls_show.phtml', $params);
 })->setName('url_checks.store');
 
 //запускаем приложение в работу
