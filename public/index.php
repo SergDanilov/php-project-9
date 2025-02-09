@@ -99,8 +99,8 @@ $app->get('/urls', function (ServerRequest $request, Response $response) {
         'lastChecks' => $lastChecksByUrlId,
     ];
 
-    return $this->get('renderer')->render($response, 'urls/index.phtml', $params);
-})->setName('urls.index');
+    return $this->get('renderer')->render($response, 'url_check.phtml', $params);
+})->setName('url.check');
 
 //3. добавление нового урла в список страниц и в бд
 $app->post('/urls', function (ServerRequest $request, Response $response) use ($router) {
@@ -142,7 +142,6 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
         $params = [
             'id' => $newId,
             'flash' => $messages,
-            // 'urlsList' => $urlsList,
         ];
         // Генерируем URL для редиректа
         $url = $router->urlFor('urls.show', $params);
@@ -159,7 +158,6 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
 })->setName('urls.store');
 
 
-
 //4. отображение конкретной страницы
 $app->get('/urls/{id:\d+}', function (ServerRequest $request, Response $response, $args) {
 
@@ -171,10 +169,9 @@ $app->get('/urls/{id:\d+}', function (ServerRequest $request, Response $response
     $checks = $dataBase->getUrlChecksById($this->get('db'), $id);
 
     if (!in_array($url, $urls)) {
-        return $response->write('Page not found')->withStatus(404);
+        return $this->get('renderer')->render($response, '404.phtml')->withStatus(404);
     }
-
-    $messages = $this->get('flash')->getMessages();
+        $messages = $this->get('flash')->getMessages();
 
     $params = [
         'id' => $id,
@@ -184,7 +181,7 @@ $app->get('/urls/{id:\d+}', function (ServerRequest $request, Response $response
         'flash' => $messages,
     ];
 
-    return $this->get('renderer')->render($response, 'urls/show.phtml', $params);
+    return $this->get('renderer')->render($response, 'urls_show.phtml', $params);
 })->setName('urls.show');
 
 
@@ -198,7 +195,18 @@ $app->post('/urls/{id:\d+}/checks', function (ServerRequest $request, Response $
     $addCheck = $dataBase->addUrlCheck($this->get('db'), $idUrl, $url);
     if (!$addCheck) {
         $response->getBody()->write("Ошибка добавления проверки URL для {$url['name']}");
-        return $response->withStatus(500);
+        $this->get('flash')->addMessage('error', 'Некорректный URL');
+        $messages = $this->get('flash')->getMessages();
+        
+        $params = [
+            'id' => $idUrl,
+            'url' => $url,
+            'flash' => $messages,
+            'checks' => null,
+        ];
+
+        $url = $router->urlFor('urls.show', $params);
+        return $response->withStatus(500)->withRedirect($url);
     } else {
         $this->get('flash')->addMessage('success', 'Страница успешно проверена');
         $messages = $this->get('flash')->getMessages();
@@ -211,10 +219,9 @@ $app->post('/urls/{id:\d+}/checks', function (ServerRequest $request, Response $
         ];
 
         $url = $router->urlFor('urls.show', $params);
-        // Редирект на маршрут с ID новой записи
         return $response->withRedirect($url);
     }
-    return $this->get('renderer')->render($response->withStatus(422), 'urls/show.phtml', $params);
+    return $this->get('renderer')->render($response->withStatus(422), 'urls_show.phtml', $params);
 })->setName('url_checks.store');
 
 //запускаем приложение в работу
