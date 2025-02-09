@@ -17,9 +17,6 @@ use DI\Container;
 use App\DataBaseHelper;
 use App\Validator;
 use Illuminate\Support;
-// use Psr\Container\ContainerInterface;
-// use Carbon\Carbon;
-// use DiDom\Document;
 
 // Старт PHP сессии
 session_start();
