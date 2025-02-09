@@ -76,40 +76,49 @@ class DataBaseHelper
     // добавление проверки в бд
     public function addUrlCheck(PDO $db, int $urlId, array|string $url): array|bool
     {
-
         try {
+            // Если $url — строка, преобразуем её в массив с ключом 'name'
+            if (is_string($url)) {
+                $url = ['name' => $url];
+            }
+
+            // Проверяем, существует ли ключ 'name' в массиве
+            if (!isset($url['name'])) {
+                throw new \InvalidArgumentException("Ключ 'name' отсутствует в массиве или URL неверно указан.");
+            }
+
             // Получаем код ответа
-            // Создаем клиент для выполнения запроса
             $client = new Client();
-            // Отправляем GET-запрос
             $res = $client->request('GET', $url['name']);
-            // Получаем статус код
             $statusCode = $res->getStatusCode();
 
             // Получение тайтла из документа
             $document = new Document($url['name'], true);
-            $titleElement = $document->first('head')->firstInDocument('title');
-            if (isset($titleElement)) {
+            $titleElement = $document->first('head title');
+            if ($titleElement) {
                 $title = $titleElement->text();
             } else {
                 $title = null;
             }
+
             // Получение дескрипшн из документа
             $descriptionElement = $document->find('meta[name="description"]');
+            $description = '-';
             if ($descriptionElement) {
                 foreach ($descriptionElement as $element) {
-                    $description = $element->content;
+                    $description = $element->getAttribute('content');
+                    break; // Берем первый найденный элемент
                 }
-            } else {
-                $description = '-';
             }
+
             // Получение H1 из документа
-            $h1Element = $document->first('body')->firstInDocument('h1');
-            if (isset($h1Element)) {
+            $h1Element = $document->first('body h1');
+            if ($h1Element) {
                 $h1 = $h1Element->text();
             } else {
                 $h1 = '-';
             }
+
             // Добавление даты и времени создания проверки
             $dateTime = Carbon::now();
 
@@ -128,9 +137,9 @@ class DataBaseHelper
                 ':description' => $description,
                 ':created_at' => $dateTime,
             ]);
+
             return $result; // Возвращаем результат выполнения запроса
         } catch (\Exception $e) {
-            //Логируем ошибку или обрабатываем ее соответствующим образом
             error_log("Ошибка добавления проверки URL: " . $e->getMessage());
             return false; // Возвращаем false в случае неудачи
         }
@@ -158,6 +167,6 @@ class DataBaseHelper
                 FROM url_checks 
                 ORDER BY url_id, created_at DESC";
         $stmt = $db->query($sql);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll();
     }
 }
