@@ -88,7 +88,7 @@ class DataBaseHelper
 
             // Получение тайтла из документа
             $document = new Document($url['name'], true);
-            $titleElement = $document->first('head')->first('title');
+            $titleElement = $document->first('head title');
             if (isset($titleElement)) {
                 $title = $titleElement->text();
             } else {
@@ -104,7 +104,7 @@ class DataBaseHelper
                 $description = '-';
             }
             // Получение H1 из документа
-            $h1Element = $document->first('body')->first('h1');
+            $h1Element = $document->first('body h1');
             if (isset($h1Element)) {
                 $h1 = $h1Element->text();
             } else {
