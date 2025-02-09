@@ -55,33 +55,13 @@
                         $lastCheckDate = $lastCheck['created_at'] ?? '';
                         $statusCode = $lastCheck['status_code'] ?? '';
                       ?>
-                    <?php endforeach ?>
-                    <?php foreach ($urls as $url):?>
                       <tr>
                         <td><?= $url['id'] ?></td>
                         <td><a href="/urls/<?= $url['id'] ?>"><?= htmlspecialchars($url['name']) ?></a></td>
                         <td>
-                        <?/*php
-                          $checkDates = null;
-                          foreach ($checkData as $key => $value): 
-                              if ($key == $url['id']): 
-                                  $checkDates = $value;
-                              endif; 
-                          endforeach; 
-                          $lastCheckDate = $checkDates ? $checkDates : '';*/
-                        ?>
                           <?= $lastCheckDate ?>
                         </td>
                         <td>
-                        <?/*php
-                        $checkCodeResponse = null;
-                          foreach ( $checkStatusCode as $key => $value): 
-                              if ($key == $url['id']): 
-                                $checkCodeResponse = $value;
-                              endif; 
-                          endforeach; 
-                          $codeResponse = $checkCodeResponse ? $checkCodeResponse : '';*/
-                        ?>
                         <?= $statusCode ?>
                         </td>
                       </tr>

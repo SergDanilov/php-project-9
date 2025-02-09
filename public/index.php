@@ -87,41 +87,6 @@ $app->get('/', function (ServerRequest $request, Response $response) use ($route
 })->setName('main');
 
 //2. список страниц
-// $app->get('/urls', function (ServerRequest $request, Response $response) {
-
-//     $dataBase = new DataBaseHelper();
-//     $urlsList = $dataBase->getUrls($this->get('db')) ?? [];
-//     $messages = $this->get('flash')->getMessages();
-//     $urlIdArray = [];
-//     $checks = $dataBase->getUrlChecks($this->get('db'));
-
-//     foreach ($urlsList as $key => $url) {
-//         $checkDates = [];
-//         $checkStatusCode = [];
-//         foreach ($checks as $check) {
-//             if ($check['url_id'] == $url['id']) {
-//                 // Добавляем дату проверки в массив
-//                 $checkDates[] = $check['created_at'];
-//             }
-//             $checkStatusCode[$check['url_id']] = $check['status_code'];
-//         }
-//         // Если массив не пуст, получаем максимальную дату, иначе выводим пустую строку
-//         $lastCheckDate = !empty($checkDates) ? max($checkDates) : '';
-//         $checkData[$url['id']] = $lastCheckDate;
-//     }
-
-//     $params = [
-//       'urls' => $urlsList,
-//       'urlIdArray' => $urlIdArray,
-//       'flash' => $messages,
-//       'checks' => $checks,
-//       'checkData' => $checkData,
-//       'checkStatusCode' => $checkStatusCode,
-//     ];
-
-//     return $this->get('renderer')->render($response, 'urls/index.phtml', $params);
-// })->setName('urls.index');
-
 $app->get('/urls', function (ServerRequest $request, Response $response) {
     $dataBase = new DataBaseHelper();
     $urlsList = $dataBase->getUrls($this->get('db')) ?? [];
@@ -239,19 +204,20 @@ $app->post('/urls/{id:\d+}/checks', function (ServerRequest $request, Response $
         return $response->withStatus(500);
     } else {
         $this->get('flash')->addMessage('success', 'Страница успешно проверена');
+        $messages = $this->get('flash')->getMessages();
+        $checks = $dataBase->getUrlChecksById($this->get('db'), $idUrl);
+        $params = [
+            'id' => $idUrl,
+            'url' => $url,
+            'flash' => $messages,
+            'checks' => $checks,
+        ];
+
+        $url = $router->urlFor('urls.show', $params);
+        // Редирект на маршрут с ID новой записи
+        return $response->withRedirect($url);
     }
-    $checks = $dataBase->getUrlChecksById($this->get('db'), $idUrl);
-    $messages = $this->get('flash')->getMessages();
-
-
-    $params = [
-        'id' => $idUrl,
-        'url' => $url,
-        'flash' => $messages,
-        'checks' => $checks,
-    ];
-
-    return $this->get('renderer')->render($response, 'urls/show.phtml', $params);
+    return $this->get('renderer')->render($response->withStatus(422), 'urls/show.phtml', $params);
 })->setName('url_checks.store');
 
 //запускаем приложение в работу
