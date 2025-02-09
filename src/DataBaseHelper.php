@@ -5,39 +5,40 @@ namespace App;
 use Carbon\Carbon;
 use DiDom\Document;
 use GuzzleHttp\Client;
+use PDO;
 
 class DataBaseHelper
 {
-    public function getUrls($db)
+    public function getUrls(PDO $db): array
     {
         $stmt = $db->query("SELECT * FROM urls ORDER BY created_at DESC");
         $urls = $stmt->fetchAll();
         return $urls;
     }
 
-    public function getUrlChecks($db)
+    public function getUrlChecks(PDO $db): array
     {
         $stmt = $db->query("SELECT * FROM url_checks ORDER BY created_at DESC");
         $url_checks = $stmt->fetchAll();
         return $url_checks;
     }
 
-    public function getUrlChecksById($db, $urlId)
+    public function getUrlChecksById(PDO $db, int $urlId): array
     {
         $stmt = $db->query("SELECT * FROM url_checks WHERE url_id = $urlId ORDER BY created_at DESC");
         $url_checks = $stmt->fetchAll();
         return $url_checks;
     }
 
-    public function getLastCheckById($db, $urlId)
-    {
-        $stmt = $db->query("SELECT * FROM url_checks WHERE url_id = $urlId ORDER BY created_at DESC LIMIT 1");
-        $last_check = $stmt->fetchAll();
-        return $last_check;
-    }
+    // public function getLastCheckById(PDO $db, int $urlId)
+    // {
+    //     $stmt = $db->query("SELECT * FROM url_checks WHERE url_id = $urlId ORDER BY created_at DESC LIMIT 1");
+    //     $last_check = $stmt->fetchAll();
+    //     return $last_check;
+    // }
 
     // добавление записи в бд
-    public function addUrl($db, $url)
+    public function addUrl(PDO $db, array $url): array|string
     {
         // Проверяем, существует ли уже запись с данным URL
         $stmt = $db->prepare("SELECT COUNT(*) FROM urls WHERE name = :name");
@@ -80,7 +81,7 @@ class DataBaseHelper
     }
 
     // добавление проверки в бд
-    public function addUrlCheck($db, $urlId, $url)
+    public function addUrlCheck(PDO $db, int $urlId, array $url): array|bool
     {
 
         try {
@@ -142,7 +143,7 @@ class DataBaseHelper
         }
     }
 
-    public function getUrlById($db, $id)
+    public function getUrlById(PDO $db, int $id): array|string
     {
         // Делаем выборку из базы по ID
         $stmt = $db->prepare("SELECT COUNT(*) FROM urls WHERE id = :id");
@@ -158,12 +159,12 @@ class DataBaseHelper
         }
     }
 
-    public function getLastUrlChecks($pdo)
+    public function getLastUrlChecks(PDO $db): array
     {
         $sql = "SELECT DISTINCT ON (url_id) url_id, created_at, status_code 
                 FROM url_checks 
                 ORDER BY url_id, created_at DESC";
-        $stmt = $pdo->query($sql);
-        return $stmt->fetchAll();
+        $stmt = $db->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
