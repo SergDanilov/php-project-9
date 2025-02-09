@@ -72,7 +72,7 @@ $app->addErrorMiddleware(true, true, true);
 $app->add(MethodOverrideMiddleware::class);
 
 //1. главная страница
-$app->get('/', function (ServerRequest $request, Response $response) use ($router) {
+$app->get('/', function (ServerRequest $request, Response $response) {
 
     $messages = $this->get('flash')->getMessages();
     $params = [
@@ -86,11 +86,11 @@ $app->get('/', function (ServerRequest $request, Response $response) use ($route
 //2. список страниц
 $app->get('/urls', function (ServerRequest $request, Response $response) {
     $dataBase = new DataBaseHelper();
-    $urlsList = $dataBase->getUrls($this->get('db')) ?? [];
+    $urlsList = $dataBase->getUrls($this->get('db')) /*?? []*/;
     $messages = $this->get('flash')->getMessages();
 
     // Получаем последние проверки для каждого URL одним запросом
-    $lastChecks = $dataBase->getLastUrlChecks($this->get('db')) ?? [];
+    $lastChecks = $dataBase->getLastUrlChecks($this->get('db')) /*?? []*/;
     $lastChecksByUrlId = Support\Arr::keyBy($lastChecks, 'url_id');
 
     $params = [
@@ -111,7 +111,7 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
     $errors = $validator->validate($urlData);
 
     if (count($errors) === 0) {
-        $urlsList = $dataBase->getUrls($this->get('db')) ?? [];
+        $urlsList = $dataBase->getUrls($this->get('db')) /*?? []*/;
         $newUrl = $dataBase->addUrl($this->get('db'), $urlData);
         $urlIdArray = [];
         foreach ($urlsList as $key => $value) {
@@ -163,7 +163,7 @@ $app->get('/urls/{id:\d+}', function (ServerRequest $request, Response $response
 
     $id = $args['id'];
     $dataBase = new DataBaseHelper();
-    $urls = $dataBase->getUrls($this->get('db')) ?? [];
+    $urls = $dataBase->getUrls($this->get('db')) /*?? []*/;
     $dbUrls = $this->get('db');
     $url = $dataBase->getUrlById($dbUrls, $id);
     $checks = $dataBase->getUrlChecksById($this->get('db'), $id);
@@ -194,7 +194,6 @@ $app->post('/urls/{id:\d+}/checks', function (ServerRequest $request, Response $
     $url = $dataBase->getUrlById($dbUrls, $idUrl);
     $addCheck = $dataBase->addUrlCheck($this->get('db'), $idUrl, $url);
     if (!$addCheck) {
-        $response->getBody()->write("Ошибка добавления проверки URL для {$url['name']}");
         $this->get('flash')->addMessage('error', 'Некорректный URL');
         $messages = $this->get('flash')->getMessages();
 

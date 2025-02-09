@@ -30,13 +30,6 @@ class DataBaseHelper
         return $url_checks;
     }
 
-    // public function getLastCheckById(PDO $db, int $urlId)
-    // {
-    //     $stmt = $db->query("SELECT * FROM url_checks WHERE url_id = $urlId ORDER BY created_at DESC LIMIT 1");
-    //     $last_check = $stmt->fetchAll();
-    //     return $last_check;
-    // }
-
     // добавление записи в бд
     public function addUrl(PDO $db, array $url): array|string
     {
@@ -81,7 +74,7 @@ class DataBaseHelper
     }
 
     // добавление проверки в бд
-    public function addUrlCheck(PDO $db, int $urlId, array $url): array|bool
+    public function addUrlCheck(PDO $db, int $urlId, array|string $url): array|bool
     {
 
         try {
@@ -103,19 +96,19 @@ class DataBaseHelper
             }
             // Получение дескрипшн из документа
             $descriptionElement = $document->find('meta[name="description"]');
-            if (isset($descriptionElement)) {
+            if ($descriptionElement) {
                 foreach ($descriptionElement as $element) {
                     $description = $element->content;
                 }
             } else {
-                $description = null;
+                $description = '-';
             }
             // Получение H1 из документа
             $h1Element = $document->first('body')->firstInDocument('h1');
             if (isset($h1Element)) {
                 $h1 = $h1Element->text();
             } else {
-                $h1 = null;
+                $h1 = '-';
             }
             // Добавление даты и времени создания проверки
             $dateTime = Carbon::now();
