@@ -197,7 +197,7 @@ $app->post('/urls/{id:\d+}/checks', function (ServerRequest $request, Response $
         $response->getBody()->write("Ошибка добавления проверки URL для {$url['name']}");
         $this->get('flash')->addMessage('error', 'Некорректный URL');
         $messages = $this->get('flash')->getMessages();
-        
+
         $params = [
             'id' => $idUrl,
             'url' => $url,
