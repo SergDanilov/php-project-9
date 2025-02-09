@@ -12,7 +12,7 @@ class Validator
         }
         $parsedUrl = parse_url($url['name']);
         if (!isset($parsedUrl['scheme']) || ($parsedUrl['scheme'] != "http" && $parsedUrl['scheme'] != "https")) {
-            $errors['scheme'] = "Некорректный адресс сайта. Добавте http:// или https:// протокол в адрес сайта.";
+            $errors['scheme'] = "Некорректный URL. Добавте http:// или https:// протокол в адрес сайта.";
             $errors['url'] = $url['name'];
         }
         return $errors;
