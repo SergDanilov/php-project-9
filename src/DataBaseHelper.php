@@ -94,7 +94,12 @@ class DataBaseHelper
             // Получение тайтла из документа
             $document = new Document($urlName, true);
             $titleElement = $document->first('head title');
-            $title = $titleElement ? $titleElement->getNode()->nodeValue : null;
+            if ($titleElement instanceof \DiDom\Element) {
+                $title = $titleElement->text();
+            } elseif ($titleElement instanceof \DOMElement) {
+                $title = $titleElement->textContent; // Используем нативный метод
+            }
+            // $title = $titleElement ? $titleElement->text() : null;
 
             // Получение дескрипшн из документа
             $descriptionElement = $document->find('meta[name="description"]');
@@ -107,7 +112,7 @@ class DataBaseHelper
             }
             // Получение H1 из документа
             $h1Element = $document->first('body h1');
-            $h1 = $h1Element ? $h1Element->getNode()->nodeValue : '-';
+            $h1 = $h1Element ? $h1Element->text() : '-';
             // Добавление даты и времени создания проверки
             $dateTime = Carbon::now();
 
