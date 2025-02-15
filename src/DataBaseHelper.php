@@ -94,12 +94,7 @@ class DataBaseHelper
             // Получение тайтла из документа
             $document = new Document($urlName, true);
             $titleElement = $document->first('head title');
-            if ($titleElement instanceof \DiDom\Element) {
-                $title = $titleElement ? $titleElement->text() : null;
-            } elseif ($titleElement instanceof \DOMElement) {
-                $title = $titleElement ? $titleElement->textContent : null; // Используем нативный метод
-            }
-            // $title = $titleElement ? $titleElement->text() : null;
+            $title = $titleElement ? $titleElement->text() : null;
 
             // Получение дескрипшн из документа
             $descriptionElement = $document->find('meta[name="description"]');
