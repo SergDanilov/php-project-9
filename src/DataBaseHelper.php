@@ -5,6 +5,7 @@ namespace App;
 use Carbon\Carbon;
 use DiDom\Document;
 use GuzzleHttp\Client;
+use Illuminate\Support;
 use PDO;
 
 class DataBaseHelper
@@ -78,22 +79,29 @@ class DataBaseHelper
     {
 
         try {
-            // Получаем код ответа
-            // Создаем клиент для выполнения запроса
+            // Определяем URL: если $url — строка, используем её, если массив — берем из ключа 'name'
+            $urlName = is_string($url) ? $url : (Support\Arr::get($url, 'name') ?? '');
+            if (empty($urlName)) {
+                throw new \InvalidArgumentException('URL is invalid');
+            }
+
+            // Теперь работаем с $urlName как строкой
             $client = new Client();
-            // Отправляем GET-запрос
-            $res = $client->request('GET', $url['name']);
+            $res = $client->request('GET', $urlName); // Используем $urlName вместо $url['name']
             // Получаем статус код
             $statusCode = $res->getStatusCode();
 
             // Получение тайтла из документа
-            $document = new Document($url['name'], true);
+            $document = new Document($urlName, true);
             $titleElement = $document->first('head title');
-            if (isset($titleElement)) {
-                $title = $titleElement->text();
-            } else {
-                $title = null;
-            }
+            $title = $titleElement ? $titleElement->text() : null;  // Используем метод text() DiDom
+
+            // $titleElement = $document->first('head title');
+            // if (isset($titleElement)) {
+            //     $title = $titleElement->text();
+            // } else {
+            //     $title = null;
+            // }
             // Получение дескрипшн из документа
             $descriptionElement = $document->find('meta[name="description"]');
             if ($descriptionElement) {
@@ -105,11 +113,7 @@ class DataBaseHelper
             }
             // Получение H1 из документа
             $h1Element = $document->first('body h1');
-            if (isset($h1Element)) {
-                $h1 = $h1Element->text();
-            } else {
-                $h1 = '-';
-            }
+            $h1 = $h1Element ? $h1Element->text() : '-';  // Используем метод text() DiDom
             // Добавление даты и времени создания проверки
             $dateTime = Carbon::now();
 
