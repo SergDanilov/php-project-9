@@ -95,9 +95,9 @@ class DataBaseHelper
             $document = new Document($urlName, true);
             $titleElement = $document->first('head title');
             if ($titleElement instanceof \DiDom\Element) {
-                $title = $titleElement->text();
+                $title = $titleElement ? $titleElement->text() : null;
             } elseif ($titleElement instanceof \DOMElement) {
-                $title = $titleElement->textContent; // Используем нативный метод
+                $title = $titleElement ? $titleElement->textContent : null; // Используем нативный метод
             }
             // $title = $titleElement ? $titleElement->text() : null;
 
