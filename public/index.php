@@ -165,18 +165,17 @@ $app->get('/urls/{id:\d+}', function (ServerRequest $request, Response $response
     $dataBase = new DataBaseHelper();
     $urls = $dataBase->getUrls($this->get('db')) /*?? []*/;
     $dbUrls = $this->get('db');
-    $url = $dataBase->getUrlById($dbUrls, $id);
+    $urlData = $dataBase->getUrlById($dbUrls, $id);
     $checks = $dataBase->getUrlChecksById($this->get('db'), $id);
 
-    if (!in_array($url, $urls)) {
+    if (!in_array($urlData, $urls)) {
         return $this->get('renderer')->render($response, '404.phtml')->withStatus(404);
     }
-        $messages = $this->get('flash')->getMessages();
+    $messages = $this->get('flash')->getMessages();
 
     $params = [
         'id' => $id,
-        'url' => $url,
-        'urls' => $urls,
+        'url' => $urlData,
         'checks' => $checks,
         'flash' => $messages,
     ];
