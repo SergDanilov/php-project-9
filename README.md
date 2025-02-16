@@ -2,7 +2,7 @@
 
 ### Hexlet tests and linter status:
 [![Actions Status](https://github.com/SergDanilov/php-project-9/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/SergDanilov/php-project-9/actions)
-[![Actions Status](https://github.com/SergDanilov/php-project-9/actions/workflows/test-workflow.yml/badge.svg)](https://github.com/SergDanilov/php-project-9/actions)
+[![Actions Status](https://github.com/SergDanilov/php-project-9/actions/workflows/workflow.yml/badge.svg)](https://github.com/SergDanilov/php-project-9/actions)
 
 <p><b>“Page analyzer”</b> is a site that analyzes specified pages for SEO suitability, similar to <a href="https://pagespeed.web.dev/">PageSpeedInsights</a>.</p>
 
