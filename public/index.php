@@ -26,36 +26,6 @@ $container = new Container();
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
-// // Соединение с бд
-// $container->set('db', function () {
-//     // Получаем строку подключения из переменной окружения
-//     $databaseUrl = $_ENV['DATABASE_URL'];
-
-//     // Разбираем строку подключения
-//     $parts = parse_url($databaseUrl);
-//     if ($parts === false) {
-//         throw new InvalidArgumentException('Invalid DATABASE_URL');
-//     }
-
-//     // Формируем DSN для PDO
-//     $dsn = sprintf(
-//         "pgsql:host=%s;port=%d;dbname=%s",
-//         $parts['host'],
-//         $parts['port'],
-//         ltrim($parts['path'], '/')
-//     );
-
-//     // Опции для PDO
-//     $options = [
-//         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-//         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-//         PDO::ATTR_EMULATE_PREPARES   => false,
-//     ];
-
-//     // Создаем подключение
-//     return new PDO($dsn, $parts['user'], $parts['pass'], $options);
-// });
-
 // Соединение с бд
 $container->set('db', function () {
     $databaseUrl = $_ENV['DATABASE_URL'];
@@ -123,11 +93,11 @@ $app->get('/', function (ServerRequest $request, Response $response) {
 //2. список страниц
 $app->get('/urls', function (ServerRequest $request, Response $response) {
     $dataBase = new DataBaseHelper();
-    $urlsList = $dataBase->getUrls($this->get('db')) /*?? []*/;
+    $urlsList = $dataBase->getUrls($this->get('db'));
     $messages = $this->get('flash')->getMessages();
 
     // Получаем последние проверки для каждого URL одним запросом
-    $lastChecks = $dataBase->getLastUrlChecks($this->get('db')) /*?? []*/;
+    $lastChecks = $dataBase->getLastUrlChecks($this->get('db'));
     $lastChecksByUrlId = Support\Arr::keyBy($lastChecks, 'url_id');
 
     $params = [
@@ -148,7 +118,7 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
     $errors = $validator->validate($urlData);
 
     if (count($errors) === 0) {
-        $urlsList = $dataBase->getUrls($this->get('db')) /*?? []*/;
+        $urlsList = $dataBase->getUrls($this->get('db'));
         $newUrl = $dataBase->addUrl($this->get('db'), $urlData);
         $urlIdArray = [];
         foreach ($urlsList as $key => $value) {
@@ -200,7 +170,7 @@ $app->get('/urls/{id:\d+}', function (ServerRequest $request, Response $response
 
     $id = $args['id'];
     $dataBase = new DataBaseHelper();
-    $urls = $dataBase->getUrls($this->get('db')) /*?? []*/;
+    $urls = $dataBase->getUrls($this->get('db'));
     $dbUrls = $this->get('db');
     $urlData = $dataBase->getUrlById($dbUrls, $id);
     $checks = $dataBase->getUrlChecksById($this->get('db'), $id);
