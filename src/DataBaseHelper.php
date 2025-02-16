@@ -47,7 +47,7 @@ class DataBaseHelper
             return $currentUrl;
         } else {
             // Если уникальный, добавляем новую запись.
-            /*добавление даты и времени создания урла*/
+            // добавление даты и времени создания урла
             $dateTime = Carbon::now();
 
             //подготовка запроса
@@ -91,14 +91,11 @@ class DataBaseHelper
             // Получаем статус код
             $statusCode = $res->getStatusCode();
 
-            // Получение тайтла из документа
+            // Получение тайтла, h1, дескрипшн  из документа
             $document = new Document($urlName, true);
             $h1 = optional($document->first('h1'))->text();
             $title = optional($document->first('head title'))->text();
-            // $description = optional($document->find('meta[name="description"]'))->getAttribute('content');
-
-            // Получение дескрипшн из документа
-            $descriptionElement = $document->toElement()->find('meta[name="description"]');
+            $descriptionElement = $document->find('meta[name="description"]');
             if ($descriptionElement) {
                 foreach ($descriptionElement as $element) {
                     $description = $element->getAttribute('content');
