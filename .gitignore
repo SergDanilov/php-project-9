@@ -6,3 +6,4 @@
 /docker/postgres/
 # .env
 >>>>>>> 2a50422cf52cd41f3994a4d0260273512f146f8a
+.env
