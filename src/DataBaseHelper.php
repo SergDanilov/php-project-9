@@ -95,23 +95,17 @@ class DataBaseHelper
             $document = new Document($urlName, true);
             $h1 = optional($document->first('h1'))->text();
             $title = optional($document->first('head title'))->text();
-            $description = optional($document->find('meta[name="description"]'))->getAttribute('content');
-            // $titleElement = $document->toElement()->first('head title');
-            // $title = $titleElement ? $titleElement->text() : null;
+            // $description = optional($document->find('meta[name="description"]'))->getAttribute('content');
 
             // Получение дескрипшн из документа
-            // $descriptionElement = $document->toElement()->find('meta[name="description"]');
-            // if ($descriptionElement) {
-            //     foreach ($descriptionElement as $element) {
-            //         $description = $element->getAttribute('content');
-            //     }
-            // } else {
-            //     $description = '-';
-            // }
-            // Получение H1 из документа
-            // $h1Element = $document->toElement()->first('body h1');
-            // $h1 = $h1Element ? $h1Element->text() : '-';
-            $h1 = optional($document->first('h1'))->text();
+            $descriptionElement = $document->toElement()->find('meta[name="description"]');
+            if ($descriptionElement) {
+                foreach ($descriptionElement as $element) {
+                    $description = $element->getAttribute('content');
+                }
+            } else {
+                $description = '-';
+            }
             // Добавление даты и времени создания проверки
             $dateTime = Carbon::now();
 
