@@ -37,4 +37,3 @@ volumes:
 networks:
   base:
     driver: bridge
-
