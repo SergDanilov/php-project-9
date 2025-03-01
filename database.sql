@@ -21,5 +21,5 @@ CREATE TABLE url_checks (
     title VARCHAR(255),
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (url_id) REFERENCES urls(id) ON DELETE CASCADE  -- Добавляем ограничение внешнего ключа
+    FOREIGN KEY (url_id) REFERENCES urls(id)
 );

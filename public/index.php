@@ -17,13 +17,14 @@ use DI\Container;
 use App\DataBaseHelper;
 use App\Validator;
 use Illuminate\Support;
+use Dotenv\Dotenv;
 
 // Старт PHP сессии
 session_start();
 
 $container = new Container();
 
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
+$dotenv = \Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
 // Соединение с бд
@@ -36,7 +37,7 @@ $container->set('db', function () {
     }
 
     // Извлекаем значения с дефолтными значениями
-    $host = Support\Arr::get($parts, 'host', 'localhost');
+    $host = \Illuminate\Support\Arr::get($parts, 'host', 'localhost');
     $port = Support\Arr::get($parts, 'port', 5432); // Порт по умолчанию для PostgreSQL
     $dbName = ltrim(Support\Arr::get($parts, 'path', ''), '/');
     $user = Support\Arr::get($parts, 'user', '');

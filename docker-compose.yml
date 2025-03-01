@@ -7,9 +7,16 @@ services:
       - "8000:8000"
     volumes:
       - ".:/app"
-      - vendor_data:/var/www/vendor
     networks:
       - base
+    depends_on:
+      - postgres
+    environment:  
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: database_9
+      DB_USERNAME: analyzer_user
+      DB_PASSWORD: analyzer_password
 
   postgres:
     image: postgres:11.2-alpine
@@ -22,9 +29,10 @@ services:
     networks:
       - base
     volumes:
-      - ./docker/postgres/data:/var/lib/postgresql/data  # Для данных
+      - postgres_data:/var/lib/postgresql/data  # Исправлено: использование именованного тома
+
 volumes:
-  vendor_data:
+  postgres_data:  # Том для данных PostgreSQL
 
 networks:
   base:
