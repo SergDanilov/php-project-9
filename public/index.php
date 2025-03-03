@@ -110,63 +110,7 @@ $app->get('/urls', function (ServerRequest $request, Response $response): Respon
     return $this->get('renderer')->render($response, 'url_check.phtml', $params);
 })->setName('url.check');
 
-// //3. добавление нового урла в список страниц и в бд
-// $app->post('/urls', function (ServerRequest $request, Response $response) use ($router): Response {
-
-//     $urlData = $request->getParsedBodyParam('url');
-//     $dataBase = new DataBaseHelper();
-//     $validator = new Validator();
-//     $errors = $validator->validate($urlData);
-
-//     if (count($errors) === 0) {
-//         $urlsList = $dataBase->getUrls($this->get('db'));
-        
-//         // 2. Проверка существования URL в БД
-//         $existingUrl = $urlData['name'];
-//         if (in_array($existingUrl, $urlsList)) {
-//             $this->get('flash')->addMessage('error', "Страница уже существует!");
-//             $messages = $this->get('flash')->getMessages();
-
-//             $curId = $urlData['id'];
-//             $params = [
-//                 'id' => $curId,
-//                 'flash' => $messages,
-//                 'urls' => $urlsList,
-//                 'existingUrl' => $existingUrl,
-//             ];
-//             $url = $router->urlFor('urls.show', $params);
-//             // Редирект на страницу конкретного урла с выводом сообщения: "Страница уже существует!"
-//             return $response->withRedirect($url);
-//         } else {
-//             $this->get('flash')->addMessage('success', 'Страница успешно добавлена :)');
-//         }
-
-//         // 3. Добавление нового URL
-//         $newUrl = $dataBase->addUrl($this->get('db'), $urlData);
-//         $messages = $this->get('flash')->getMessages();
-
-//         // Получаем ID новой записи
-//         $newId = $newUrl[0]['id'];
-//         $params = [
-//             'id' => $newId,
-//             'flash' => $messages,
-//             'urls' => $urlsList,
-//             'existingUrl' => $existingUrl,
-//             'urlData' => $urlData,
-//         ];
-//         // Генерируем URL для редиректа
-//         $url = $router->urlFor('urls.show', $params);
-//         // Редирект на маршрут с ID новой записи
-//         return $response->withRedirect($url);
-//     }
-
-//     $params = [
-//         'urlData' => $urlData,
-//         'errors' => $errors
-//     ];
-
-//     return $this->get('renderer')->render($response->withStatus(422), 'main.phtml', $params);
-// })->setName('urls.store');
+//3. добавление нового урла в список страниц и в бд
 function normalizeUrl(string $url): ?string {
     $url = mb_strtolower(trim($url));
     if (!parse_url($url, PHP_URL_SCHEME)) {
@@ -177,6 +121,7 @@ function normalizeUrl(string $url): ?string {
         ? "{$parts['scheme']}://{$parts['host']}"
         : null;
 }
+
 $app->post('/urls', function (ServerRequest $request, Response $response) use ($router): Response {
     $urlData = $request->getParsedBodyParam('url');
     $validator = new Validator();
