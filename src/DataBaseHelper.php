@@ -24,7 +24,7 @@ class DataBaseHelper
         return $url_checks;
     }
 
-    public function findUrlByName(PDO $db, string $url): ?array
+    public function findUrlByName(PDO $db, string|null $url): ?array
     {
         $stmt = $db->prepare('SELECT * FROM urls WHERE name = ?');
         $stmt->execute([$url]);
