@@ -24,7 +24,8 @@ class DataBaseHelper
         return $url_checks;
     }
 
-    public function findUrlByName(PDO $db, string $url): ?array {
+    public function findUrlByName(PDO $db, string $url): ?array
+    {
         $stmt = $db->prepare('SELECT * FROM urls WHERE name = ?');
         $stmt->execute([$url]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
@@ -80,8 +81,6 @@ class DataBaseHelper
             }
         }
     }
-
-    
 
     // добавление проверки в бд
     public function addUrlCheck(PDO $db, int $urlId, array|string $url): array|bool
