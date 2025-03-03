@@ -24,6 +24,12 @@ class DataBaseHelper
         return $url_checks;
     }
 
+    public function findUrlByName(PDO $db, string $url): ?array {
+        $stmt = $db->prepare('SELECT * FROM urls WHERE name = ?');
+        $stmt->execute([$url]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
     public function getUrlChecksById(PDO $db, int $urlId): array
     {
         $stmt = $db->query("SELECT * FROM url_checks WHERE url_id = $urlId ORDER BY created_at DESC");
@@ -31,7 +37,7 @@ class DataBaseHelper
         return $url_checks;
     }
 
-    // добавление записи в бд
+    // добавление URL в бд
     public function addUrl(PDO $db, array $url): array|string
     {
         // Проверяем, существует ли уже запись с данным URL
@@ -42,9 +48,9 @@ class DataBaseHelper
         if ($count > 0) {
             $stmt = $db->prepare("SELECT * FROM urls WHERE name = :name");
             $stmt->execute([':name' => $url['name']]);
-            $currentUrl = $stmt->fetchAll();
+            $currentUrl = $stmt->fetchObject();
 
-            return $currentUrl;
+            return (array)$currentUrl;
         } else {
             // Если уникальный, добавляем новую запись.
             // добавление даты и времени создания урла
@@ -65,14 +71,17 @@ class DataBaseHelper
                 // Получаем добавленный URL
                 $stmt = $db->prepare("SELECT * FROM urls WHERE name = :name");
                 $stmt->execute([':name' => $url['name']]);
-                $createdUrl = $stmt->fetchAll();
-                return $createdUrl; // Возвращаем добавленный URL в случае успеха
+                $createdUrl = $stmt->fetchObject();
+                // var_dump($createdUrl);
+                return (array)$createdUrl; // Возвращаем добавленный URL в случае успеха
             } else {
                 // Обработка ошибки вставки
                 return "Error: Unable to insert URL.";
             }
         }
     }
+
+    
 
     // добавление проверки в бд
     public function addUrlCheck(PDO $db, int $urlId, array|string $url): array|bool

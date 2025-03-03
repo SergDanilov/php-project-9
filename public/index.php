@@ -38,10 +38,10 @@ $container->set('db', function () {
 
     // Извлекаем значения с дефолтными значениями
     $host = \Illuminate\Support\Arr::get($parts, 'host', 'localhost');
-    $port = Support\Arr::get($parts, 'port', 5432); // Порт по умолчанию для PostgreSQL
-    $dbName = ltrim(Support\Arr::get($parts, 'path', ''), '/');
-    $user = Support\Arr::get($parts, 'user', '');
-    $pass = Support\Arr::get($parts, 'pass', '');
+    $port = \Illuminate\Support\Arr::get($parts, 'port', 5432); // Порт по умолчанию для PostgreSQL
+    $dbName = ltrim(\Illuminate\Support\Arr::get($parts, 'path', ''), '/');
+    $user = \Illuminate\Support\Arr::get($parts, 'user', '');
+    $pass = \Illuminate\Support\Arr::get($parts, 'pass', '');
 
     // Проверяем обязательные параметры
     if (empty($host) || empty($dbName)) {
@@ -80,7 +80,7 @@ $app->addErrorMiddleware(true, true, true);
 $app->add(MethodOverrideMiddleware::class);
 
 //1. главная страница
-$app->get('/', function (ServerRequest $request, Response $response) {
+$app->get('/', function (ServerRequest $request, Response $response): Response {
 
     $messages = $this->get('flash')->getMessages();
     $params = [
@@ -92,14 +92,14 @@ $app->get('/', function (ServerRequest $request, Response $response) {
 })->setName('main');
 
 //2. список страниц
-$app->get('/urls', function (ServerRequest $request, Response $response) {
+$app->get('/urls', function (ServerRequest $request, Response $response): Response {
     $dataBase = new DataBaseHelper();
     $urlsList = $dataBase->getUrls($this->get('db'));
     $messages = $this->get('flash')->getMessages();
 
     // Получаем последние проверки для каждого URL одним запросом
     $lastChecks = $dataBase->getLastUrlChecks($this->get('db'));
-    $lastChecksByUrlId = Support\Arr::keyBy($lastChecks, 'url_id');
+    $lastChecksByUrlId = \Illuminate\Support\Arr::keyBy($lastChecks, 'url_id');
 
     $params = [
         'urls' => $urlsList,
@@ -110,64 +110,125 @@ $app->get('/urls', function (ServerRequest $request, Response $response) {
     return $this->get('renderer')->render($response, 'url_check.phtml', $params);
 })->setName('url.check');
 
-//3. добавление нового урла в список страниц и в бд
-$app->post('/urls', function (ServerRequest $request, Response $response) use ($router) {
+// //3. добавление нового урла в список страниц и в бд
+// $app->post('/urls', function (ServerRequest $request, Response $response) use ($router): Response {
 
+//     $urlData = $request->getParsedBodyParam('url');
+//     $dataBase = new DataBaseHelper();
+//     $validator = new Validator();
+//     $errors = $validator->validate($urlData);
+
+//     if (count($errors) === 0) {
+//         $urlsList = $dataBase->getUrls($this->get('db'));
+        
+//         // 2. Проверка существования URL в БД
+//         $existingUrl = $urlData['name'];
+//         if (in_array($existingUrl, $urlsList)) {
+//             $this->get('flash')->addMessage('error', "Страница уже существует!");
+//             $messages = $this->get('flash')->getMessages();
+
+//             $curId = $urlData['id'];
+//             $params = [
+//                 'id' => $curId,
+//                 'flash' => $messages,
+//                 'urls' => $urlsList,
+//                 'existingUrl' => $existingUrl,
+//             ];
+//             $url = $router->urlFor('urls.show', $params);
+//             // Редирект на страницу конкретного урла с выводом сообщения: "Страница уже существует!"
+//             return $response->withRedirect($url);
+//         } else {
+//             $this->get('flash')->addMessage('success', 'Страница успешно добавлена :)');
+//         }
+
+//         // 3. Добавление нового URL
+//         $newUrl = $dataBase->addUrl($this->get('db'), $urlData);
+//         $messages = $this->get('flash')->getMessages();
+
+//         // Получаем ID новой записи
+//         $newId = $newUrl[0]['id'];
+//         $params = [
+//             'id' => $newId,
+//             'flash' => $messages,
+//             'urls' => $urlsList,
+//             'existingUrl' => $existingUrl,
+//             'urlData' => $urlData,
+//         ];
+//         // Генерируем URL для редиректа
+//         $url = $router->urlFor('urls.show', $params);
+//         // Редирект на маршрут с ID новой записи
+//         return $response->withRedirect($url);
+//     }
+
+//     $params = [
+//         'urlData' => $urlData,
+//         'errors' => $errors
+//     ];
+
+//     return $this->get('renderer')->render($response->withStatus(422), 'main.phtml', $params);
+// })->setName('urls.store');
+function normalizeUrl(string $url): ?string {
+    $url = mb_strtolower(trim($url));
+    if (!parse_url($url, PHP_URL_SCHEME)) {
+        $url = "http://{$url}";
+    }
+    $parts = parse_url($url);
+    return ($parts && !empty($parts['host'])) 
+        ? "{$parts['scheme']}://{$parts['host']}"
+        : null;
+}
+$app->post('/urls', function (ServerRequest $request, Response $response) use ($router): Response {
     $urlData = $request->getParsedBodyParam('url');
-    $dataBase = new DataBaseHelper();
     $validator = new Validator();
     $errors = $validator->validate($urlData);
 
-    if (count($errors) === 0) {
-        $urlsList = $dataBase->getUrls($this->get('db'));
-        $newUrl = $dataBase->addUrl($this->get('db'), $urlData);
-        $urlIdArray = [];
-        foreach ($urlsList as $key => $value) {
-            $urlIdArray[] = $value['id'];
-        }
+    // Нормализация URL
+    $rawUrl = $urlData['name'] ?? '';
+    $normalizedUrl = normalizeUrl($rawUrl);
 
-        if (in_array($newUrl[0]['id'], $urlIdArray)) {
-            $this->get('flash')->addMessage('error', "Страница уже существует!");
-            $messages = $this->get('flash')->getMessages();
-
-            $curId = $newUrl[0]['id'];
-            $params = [
-                'id' => $curId,
-                'flash' => $messages,
-                'urls' => $urlsList,
-                'urlIdArray' => $urlIdArray,
-            ];
-            $url = $router->urlFor('urls.show', $params);
-            // Редирект на страницу конкретного урла с выводом сообщения: "Страница уже существует!"
-            return $response->withRedirect($url);
-        } else {
-            $this->get('flash')->addMessage('success', 'Страница успешно добавлена :)');
-        }
-
-        $messages = $this->get('flash')->getMessages();
-        // Получаем ID новой записи
-        $newId = $newUrl[0]['id'];
-        $params = [
-            'id' => $newId,
-            'flash' => $messages,
-        ];
-        // Генерируем URL для редиректа
-        $url = $router->urlFor('urls.show', $params);
-        // Редирект на маршрут с ID новой записи
-        return $response->withRedirect($url);
+    if (!$normalizedUrl) {
+        $errors['name'] = 'Некорректный URL';
     }
 
-    $params = [
-        'urlData' => $urlData,
-        'errors' => $errors
-    ];
+    if (!empty($errors)) {
+        return $this->get('renderer')->render($response->withStatus(422), 'main.phtml', [
+            'urlData' => $urlData,
+            'errors' => $errors
+        ]);
+    }
 
-    return $this->get('renderer')->render($response->withStatus(422), 'main.phtml', $params);
+    $db = $this->get('db');
+    $dataBase = new DataBaseHelper();
+
+    try {
+        // Проверка существования URL
+        $existingUrl = $dataBase->findUrlByName($db, $normalizedUrl);
+        
+        if ($existingUrl) {
+            $this->get('flash')->addMessage('error', 'Страница уже существует!');
+            return $response->withRedirect(
+                $router->urlFor('urls.show', ['id' => $existingUrl['id']])
+            );
+        }
+
+        // Добавление нового URL
+        $newUrl = $dataBase->addUrl($db, ['name' => $normalizedUrl]);
+        
+        $this->get('flash')->addMessage('success', 'Страница успешно добавлена :)');
+        return $response->withRedirect(
+            $router->urlFor('urls.show', ['id' => $newUrl['id']])
+        );
+
+    } catch (PDOException $e) {
+        // Обработка ошибки дубликата
+        $this->get('flash')->addMessage('error', 'Страница уже существует!');
+        return $response->withRedirect($router->urlFor('main'));
+    }
 })->setName('urls.store');
 
 
 //4. отображение конкретной страницы
-$app->get('/urls/{id:\d+}', function (ServerRequest $request, Response $response, $args) {
+$app->get('/urls/{id:\d+}', function (ServerRequest $request, Response $response, $args): Response {
 
     $id = $args['id'];
     $dataBase = new DataBaseHelper();
@@ -193,41 +254,44 @@ $app->get('/urls/{id:\d+}', function (ServerRequest $request, Response $response
 
 
 //5. добавление новой проверки в список проверок и в бд
-$app->post('/urls/{id:\d+}/checks', function (ServerRequest $request, Response $response, $args) use ($router) {
-    $idUrl = $args['id'];
-    $dbUrls = $this->get('db');
-    $dataBase = new DataBaseHelper();
+$app->post(
+    '/urls/{id:\d+}/checks',
+    function (ServerRequest $request, Response $response, $args) use ($router): Response {
+        $idUrl = $args['id'];
+        $dbUrls = $this->get('db');
+        $dataBase = new DataBaseHelper();
 
-    $url = $dataBase->getUrlById($dbUrls, $idUrl);
-    $addCheck = $dataBase->addUrlCheck($this->get('db'), $idUrl, $url);
-    if (!$addCheck) {
-        $this->get('flash')->addMessage('error', 'Некорректный URL');
-        $messages = $this->get('flash')->getMessages();
+        $url = $dataBase->getUrlById($dbUrls, $idUrl);
+        $addCheck = $dataBase->addUrlCheck($this->get('db'), $idUrl, $url);
+        if (!$addCheck) {
+            $this->get('flash')->addMessage('error', 'Некорректный URL');
+            $messages = $this->get('flash')->getMessages();
 
-        $params = [
-            'id' => $idUrl,
-            'url' => $url,
-            'flash' => $messages,
-            'checks' => null,
-        ];
+            $params = [
+                'id' => $idUrl,
+                'url' => $url,
+                'flash' => $messages,
+                'checks' => null,
+            ];
 
-        $url = $router->urlFor('urls.show', $params);
-        return $response->withStatus(500)->withRedirect($url);
-    } else {
-        $this->get('flash')->addMessage('success', 'Страница успешно проверена');
-        $messages = $this->get('flash')->getMessages();
-        $checks = $dataBase->getUrlChecksById($this->get('db'), $idUrl);
-        $params = [
-            'id' => $idUrl,
-            'url' => $url,
-            'flash' => $messages,
-            'checks' => $checks,
-        ];
+            $url = $router->urlFor('urls.show', $params);
+            return $response->withStatus(500)->withRedirect($url);
+        } else {
+            $this->get('flash')->addMessage('success', 'Страница успешно проверена');
+            $messages = $this->get('flash')->getMessages();
+            $checks = $dataBase->getUrlChecksById($this->get('db'), $idUrl);
+            $params = [
+                'id' => $idUrl,
+                'url' => $url,
+                'flash' => $messages,
+                'checks' => $checks,
+            ];
 
-        $url = $router->urlFor('urls.show', $params);
-        return $response->withRedirect($url);
+            $url = $router->urlFor('urls.show', $params);
+            return $response->withRedirect($url);
+        }
     }
-})->setName('url_checks.store');
+)->setName('url_checks.store');
 
 //запускаем приложение в работу
 $app->run();
