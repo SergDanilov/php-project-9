@@ -39,47 +39,37 @@ class DataBaseHelper
     }
 
     // добавление URL в бд
-    public function addUrl(PDO $db, array $url): array|string
+    public function addUrl(PDO $db, array $url): array
     {
-        // Проверяем, существует ли уже запись с данным URL
-        $stmt = $db->prepare("SELECT COUNT(*) FROM urls WHERE name = :name");
-        $stmt->execute([':name' => $url['name']]);
-        $count = $stmt->fetchColumn();
+        // Добавление даты и времени создания URL
+        $dateTime = Carbon::now();
 
-        if ($count > 0) {
-            $stmt = $db->prepare("SELECT * FROM urls WHERE name = :name");
-            $stmt->execute([':name' => $url['name']]);
-            $currentUrl = $stmt->fetchObject();
+        // Подготовка запроса
+        $stmt = $db->prepare("
+            INSERT INTO urls (name, created_at) VALUES (:name, :created_at)
+        ");
 
-            return (array)$currentUrl;
-        } else {
-            // Если уникальный, добавляем новую запись.
-            // добавление даты и времени создания урла
-            $dateTime = Carbon::now();
-
-            //подготовка запроса
-            $stmt = $db->prepare("
-                INSERT INTO urls (name, created_at) VALUES (:name, :created_at)
-            ");
-
-            // Выполняем запрос с параметрами для внесения в базу
-            $result = $stmt->execute([
-                ':name' => $url['name'],
-                ':created_at' => $dateTime,
-            ]);
-
-            if ($result) {
-                // Получаем добавленный URL
-                $stmt = $db->prepare("SELECT * FROM urls WHERE name = :name");
-                $stmt->execute([':name' => $url['name']]);
-                $createdUrl = $stmt->fetchObject();
-                // var_dump($createdUrl);
-                return (array)$createdUrl; // Возвращаем добавленный URL в случае успеха
-            } else {
-                // Обработка ошибки вставки
-                return "Error: Unable to insert URL.";
-            }
+        // Выполняем запрос с параметрами для внесения в базу
+        if (
+            !$stmt->execute(
+                [':name' => $url['name'],
+                ':created_at' => $dateTime,]
+            )
+        ) {
+            // Обработка ошибки вставки
+            throw new \Exception("Error: Unable to insert URL.");
         }
+
+        // Получаем добавленный URL
+        $stmt = $db->prepare("SELECT * FROM urls WHERE name = :name");
+        $stmt->execute([':name' => $url['name']]);
+        $createdUrl = $stmt->fetchObject();
+
+        if ($createdUrl === false) {
+            throw new \Exception("Error: URL not found after insertion.");
+        }
+
+        return (array)$createdUrl; // Возвращаем добавленный URL в случае успеха
     }
 
     // добавление проверки в бд

@@ -149,12 +149,17 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
         }
 
         // Добавление нового URL
-        $newUrl = $dataBase->addUrl($db, ['name' => $normalizedUrl]);
-
-        $this->get('flash')->addMessage('success', 'Страница успешно добавлена :)');
-        return $response->withRedirect(
-            $router->urlFor('urls.show', ['id' => $newUrl['id']])
-        );
+        try {
+            $newUrl = $dataBase->addUrl($db, ['name' => $normalizedUrl]);
+            $this->get('flash')->addMessage('success', 'Страница успешно добавлена :)');
+            return $response->withRedirect(
+                $router->urlFor('urls.show', ['id' => $newUrl['id']])
+            );
+        } catch (Exception $e) {
+            // Обработка ошибки
+            $this->get('flash')->addMessage('error', 'Ошибка при добавлении страницы: ' . $e->getMessage());
+            return $response->withRedirect($router->urlFor('main'));
+        }
     } catch (PDOException $e) {
         // Обработка ошибки дубликата
         $this->get('flash')->addMessage('error', 'Страница уже существует!');
@@ -168,12 +173,11 @@ $app->get('/urls/{id:\d+}', function (ServerRequest $request, Response $response
 
     $id = $args['id'];
     $dataBase = new DataBaseHelper();
-    $urls = $dataBase->getUrls($this->get('db'));
     $dbUrls = $this->get('db');
     $urlData = $dataBase->getUrlById($dbUrls, $id);
     $checks = $dataBase->getUrlChecksById($this->get('db'), $id);
 
-    if (!in_array($urlData, $urls)) {
+    if ($urlData == "Запись с ID = {$id} не найдена.") {
         return $this->get('renderer')->render($response, '404.phtml')->withStatus(404);
     }
     $messages = $this->get('flash')->getMessages();
