@@ -16,6 +16,7 @@ use Slim\Middleware\MethodOverrideMiddleware;
 use DI\Container;
 use App\DataBaseHelper;
 use App\Validator;
+use App\Normalizer;
 use Illuminate\Support;
 use Dotenv\Dotenv;
 
@@ -111,16 +112,6 @@ $app->get('/urls', function (ServerRequest $request, Response $response): Respon
 })->setName('url.check');
 
 //3. добавление нового урла в список страниц и в бд
-function normalizeUrl(string $url): ?string {
-    $url = mb_strtolower(trim($url));
-    if (!parse_url($url, PHP_URL_SCHEME)) {
-        $url = "http://{$url}";
-    }
-    $parts = parse_url($url);
-    return ($parts && !empty($parts['host'])) 
-        ? "{$parts['scheme']}://{$parts['host']}"
-        : null;
-}
 
 $app->post('/urls', function (ServerRequest $request, Response $response) use ($router): Response {
     $urlData = $request->getParsedBodyParam('url');
@@ -128,8 +119,9 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
     $errors = $validator->validate($urlData);
 
     // Нормализация URL
+    $normalizer = new Normalizer();
     $rawUrl = $urlData['name'] ?? '';
-    $normalizedUrl = normalizeUrl($rawUrl);
+    $normalizedUrl = $normalizer->normalizeUrl($rawUrl);
 
     if (!$normalizedUrl) {
         $errors['name'] = 'Некорректный URL';
@@ -148,7 +140,7 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
     try {
         // Проверка существования URL
         $existingUrl = $dataBase->findUrlByName($db, $normalizedUrl);
-        
+
         if ($existingUrl) {
             $this->get('flash')->addMessage('error', 'Страница уже существует!');
             return $response->withRedirect(
@@ -158,12 +150,11 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
 
         // Добавление нового URL
         $newUrl = $dataBase->addUrl($db, ['name' => $normalizedUrl]);
-        
+
         $this->get('flash')->addMessage('success', 'Страница успешно добавлена :)');
         return $response->withRedirect(
             $router->urlFor('urls.show', ['id' => $newUrl['id']])
         );
-
     } catch (PDOException $e) {
         // Обработка ошибки дубликата
         $this->get('flash')->addMessage('error', 'Страница уже существует!');
