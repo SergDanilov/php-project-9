@@ -29,6 +29,7 @@ services:
     networks:
       - base
     volumes:
+      - ./database.sql:/docker-entrypoint-initdb.d/init.sql
       - postgres_data:/var/lib/postgresql/data  # Исправлено: использование именованного тома
 
 volumes:
