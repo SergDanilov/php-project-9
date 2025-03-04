@@ -13,6 +13,8 @@ jobs:
         with:
           php-version: 8.2
       - name: Set-up
+        env:
+          DATABASE_URL: 'postgresql://analyzer_user:analyzer_password@postgres:5432/database_9'
         run: make setup
       - name: Run linter
         run: make lint
