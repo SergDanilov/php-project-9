@@ -17,6 +17,7 @@ services:
       DB_DATABASE: database_9
       DB_USERNAME: analyzer_user
       DB_PASSWORD: analyzer_password
+      DATABASE_URL: postgresql://analyzer_user:analyzer_password@postgres:5432/database_9
 
   postgres:
     image: postgres:11.2-alpine

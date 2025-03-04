@@ -17,7 +17,7 @@ use DI\Container;
 use App\DataBaseHelper;
 use App\Validator;
 use App\Normalizer;
-use Illuminate\Support;
+use Illuminate;
 use Dotenv\Dotenv;
 
 // Старт PHP сессии
@@ -25,8 +25,19 @@ session_start();
 
 $container = new Container();
 
-$dotenv = \Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
-$dotenv->load();
+$dotenvPath = __DIR__ . '/../.env';
+// Проверяем наличие файла .env
+if (file_exists($dotenvPath)) {
+    $dotenv = \Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
+    $dotenv->load();
+} else {
+    // Если файл .env не найден, проверяем переменные окружения CI
+    if (empty($_ENV['DATABASE_URL'])) {
+        throw new InvalidArgumentException(
+            'DATABASE_URL is not set in the environment variables, and .env file is missing.'
+        );
+    }
+}
 
 // Соединение с бд
 $container->set('db', function () {
@@ -40,8 +51,8 @@ $container->set('db', function () {
     // Извлекаем значения с дефолтными значениями
     $host = \Illuminate\Support\Arr::get($parts, 'host', 'localhost');
     $port = \Illuminate\Support\Arr::get($parts, 'port', 5432); // Порт по умолчанию для PostgreSQL
-    $dbName = ltrim(\Illuminate\Support\Arr::get($parts, 'path', ''), '/');
-    $user = \Illuminate\Support\Arr::get($parts, 'user', '');
+    $dbName = ltrim(\Illuminate\Support\Arr::get($parts, 'path', 'database_9'), '/');
+    $user = \Illuminate\Support\Arr::get($parts, 'user', 'analyzer_user');
     $pass = \Illuminate\Support\Arr::get($parts, 'pass', '');
 
     // Проверяем обязательные параметры
@@ -64,6 +75,7 @@ $container->set('db', function () {
 
     return new PDO($dsn, $user, $pass, $options);
 });
+
 
 $container->set('renderer', function () {
     // Параметром передается базовая директория, в которой будут храниться шаблоны
