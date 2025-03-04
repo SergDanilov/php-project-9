@@ -17,7 +17,7 @@ use DI\Container;
 use App\DataBaseHelper;
 use App\Validator;
 use App\Normalizer;
-use Illuminate;
+use Illuminate\Support;
 use Dotenv\Dotenv;
 
 // Старт PHP сессии
