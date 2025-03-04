@@ -73,9 +73,9 @@ class DataBaseHelper
     public function addUrlCheck(
         PDO $db,
         int $urlId,
-        string $h1,
-        string $title,
-        string $description,
+        string|null $h1,
+        string|null $title,
+        string|null $description,
         Carbon $dateTime,
         int $statusCode
     ): array|bool {
