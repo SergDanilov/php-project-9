@@ -3,9 +3,7 @@
 namespace App;
 
 use Carbon\Carbon;
-use DiDom\Document;
-use GuzzleHttp\Client;
-use Illuminate\Support;
+// use Illuminate\Support;
 use PDO;
 
 class DataBaseHelper
@@ -73,38 +71,17 @@ class DataBaseHelper
     }
 
     // добавление проверки в бд
-    public function addUrlCheck(PDO $db, int $urlId, array|string $url): array|bool
-    {
+    public function addUrlCheck(
+        PDO $db,
+        int $urlId,
+        string $h1,
+        string $title,
+        string $description,
+        Carbon $dateTime,
+        int $statusCode
+    ): array|bool {
 
         try {
-            // Определяем URL: если $url — строка, используем её, если массив — берем из ключа 'name'
-            $urlName = is_string($url) ? $url : (Support\Arr::get($url, 'name') ?? '');
-            if (empty($urlName)) {
-                throw new \InvalidArgumentException('URL is invalid');
-            }
-
-            // Теперь работаем с $urlName как строкой
-            $client = new Client();
-            $res = $client->request('GET', $urlName); // Используем $urlName вместо $url['name']
-            // Получаем статус код
-            $statusCode = $res->getStatusCode();
-
-            // Получение тайтла, h1, дескрипшн  из документа
-            $document = new Document($urlName, true);
-            $h1 = optional($document->first('h1'))->text();
-            $title = optional($document->first('head title'))->text();
-            $descriptionElement = $document->find('meta[name="description"]');
-            if ($descriptionElement) {
-                foreach ($descriptionElement as $element) {
-                    $description = $element->getAttribute('content');
-                }
-            } else {
-                $description = '-';
-            }
-            // Добавление даты и времени создания проверки
-            $dateTime = Carbon::now();
-
-            // Подготавливаем запрос к базе данных
             $stmt = $db->prepare("
                 INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
                 VALUES (:url_id, :status_code, :h1, :title, :description, :created_at)

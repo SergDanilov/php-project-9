@@ -17,7 +17,10 @@ use DI\Container;
 use App\DataBaseHelper;
 use App\Validator;
 use App\Normalizer;
+use DiDom\Document;
+use GuzzleHttp\Client;
 use Illuminate\Support;
+use Carbon\Carbon;
 use Dotenv\Dotenv;
 
 // Старт PHP сессии
@@ -214,7 +217,34 @@ $app->post(
         $dataBase = new DataBaseHelper();
 
         $url = $dataBase->getUrlById($dbUrls, $idUrl);
-        $addCheck = $dataBase->addUrlCheck($this->get('db'), $idUrl, $url);
+        // Определяем URL: если $url — строка, используем её, если массив — берем из ключа 'name'
+        $urlName = is_string($url) ? $url : (Support\Arr::get($url, 'name') ?? '');
+        if (empty($urlName)) {
+            throw new \InvalidArgumentException('URL is invalid');
+        }
+
+        // Теперь работаем с $urlName как строкой
+        $client = new Client();
+        $res = $client->request('GET', $urlName); // Используем $urlName вместо $url['name']
+        // Получаем статус код
+        $statusCode = $res->getStatusCode();
+
+        // Получение тайтла, h1, дескрипшн  из документа
+        $document = new Document($urlName, true);
+        $h1 = optional($document->first('h1'))->text();
+        $title = optional($document->first('head title'))->text();
+        $descriptionElement = $document->find('meta[name="description"]');
+        if ($descriptionElement) {
+            foreach ($descriptionElement as $element) {
+                $description = $element->getAttribute('content');
+            }
+        } else {
+            $description = '-';
+        }
+        // Добавление даты и времени создания проверки
+        $dateTime = Carbon::now();
+        // Передаем все в БД
+        $addCheck = $dataBase->addUrlCheck($this->get('db'), $idUrl, $h1, $title, $description, $dateTime, $statusCode);
         if (!$addCheck) {
             $this->get('flash')->addMessage('error', 'Некорректный URL');
             $messages = $this->get('flash')->getMessages();
