@@ -5,6 +5,7 @@
 [![Actions Status](https://github.com/SergDanilov/php-project-9/actions/workflows/workflow.yml/badge.svg)](https://github.com/SergDanilov/php-project-9/actions)
 
 <p><b>“Page analyzer”</b> is a site that analyzes specified pages for SEO suitability, similar to <a href="https://pagespeed.web.dev/">PageSpeedInsights</a>.</p>
+<p>You can <b>test this app online</b> <a href="https://php-project-page-analyzer.onrender.com/">here</a>.</p>
 
 ## Prerequisites
 
