@@ -165,7 +165,9 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
 
         // Добавление нового URL
         try {
-            $newUrl = $dataBase->addUrl($db, ['name' => $normalizedUrl]);
+            // Добавление даты и времени создания URL
+            $dateTime = Carbon::now();
+            $newUrl = $dataBase->addUrl($db, ['name' => $normalizedUrl], $dateTime);
             $this->get('flash')->addMessage('success', 'Страница успешно добавлена :)');
             return $response->withRedirect(
                 $router->urlFor('urls.show', ['id' => $newUrl['id']])

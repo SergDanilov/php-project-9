@@ -36,11 +36,8 @@ class DataBaseHelper
     }
 
     // добавление URL в бд
-    public function addUrl(PDO $db, array $url): array
+    public function addUrl(PDO $db, array $url, Carbon $dateTime): array
     {
-        // Добавление даты и времени создания URL
-        $dateTime = Carbon::now();
-
         // Подготовка запроса
         $stmt = $db->prepare("
             INSERT INTO urls (name, created_at) VALUES (:name, :created_at)
