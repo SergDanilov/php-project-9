@@ -28,23 +28,22 @@ session_start();
 
 $container = new Container();
 
-$dotenvPath = __DIR__ . '/../.env';
-// Проверяем наличие файла .env
-if (file_exists($dotenvPath)) {
-    $dotenv = \Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
-    $dotenv->load();
-} else {
-    // Если файл .env не найден, проверяем переменные окружения CI
-    if (empty($_ENV['DATABASE_URL'])) {
-        throw new InvalidArgumentException(
-            'DATABASE_URL is not set in the environment variables, and .env file is missing.'
-        );
-    }
-}
+
+$dotenv = \Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
+$dotenv->safeload();
+
 
 // Соединение с бд
 $container->set('db', function () {
-    $databaseUrl = $_ENV['DATABASE_URL'];
+    // Используем переменную DATABASE_URL, из файла .env если он есть
+    $databaseUrl = getenv('DATABASE_URL') ?? $_ENV['DATABASE_URL'];
+
+    if (empty($databaseUrl)) {
+        throw new InvalidArgumentException(
+            'DATABASE_URL is not set in the environment variables.'
+        );
+    }
+
     $parts = parse_url($databaseUrl);
 
     if ($parts === false) {
@@ -123,8 +122,8 @@ $app->get('/urls', function (ServerRequest $request, Response $response): Respon
         'lastChecks' => $lastChecksByUrlId,
     ];
 
-    return $this->get('renderer')->render($response, 'url_check.phtml', $params);
-})->setName('url.check');
+    return $this->get('renderer')->render($response, '/urls/urls_show.phtml', $params);
+})->setName('urls.show');
 
 //3. добавление нового урла в список страниц и в бд
 
@@ -159,7 +158,7 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
         if ($existingUrl) {
             $this->get('flash')->addMessage('error', 'Страница уже существует!');
             return $response->withRedirect(
-                $router->urlFor('urls.show', ['id' => $existingUrl['id']])
+                $router->urlFor('url.check', ['id' => $existingUrl['id']])
             );
         }
 
@@ -170,7 +169,7 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
             $newUrl = $dataBase->addUrl($db, ['name' => $normalizedUrl], $dateTime);
             $this->get('flash')->addMessage('success', 'Страница успешно добавлена :)');
             return $response->withRedirect(
-                $router->urlFor('urls.show', ['id' => $newUrl['id']])
+                $router->urlFor('url.check', ['id' => $newUrl['id']])
             );
         } catch (Exception $e) {
             // Обработка ошибки
@@ -206,8 +205,8 @@ $app->get('/urls/{id:\d+}', function (ServerRequest $request, Response $response
         'flash' => $messages,
     ];
 
-    return $this->get('renderer')->render($response, 'urls_show.phtml', $params);
-})->setName('urls.show');
+    return $this->get('renderer')->render($response, '/urls/url_check.phtml', $params);
+})->setName('url.check');
 
 
 //5. добавление новой проверки в список проверок и в бд
@@ -258,7 +257,7 @@ $app->post(
                 'checks' => null,
             ];
 
-            $url = $router->urlFor('urls.show', $params);
+            $url = $router->urlFor('url.check', $params);
             return $response->withStatus(500)->withRedirect($url);
         } else {
             $this->get('flash')->addMessage('success', 'Страница успешно проверена');
@@ -271,7 +270,7 @@ $app->post(
                 'checks' => $checks,
             ];
 
-            $url = $router->urlFor('urls.show', $params);
+            $url = $router->urlFor('url.check', $params);
             return $response->withRedirect($url);
         }
     }
