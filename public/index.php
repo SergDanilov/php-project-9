@@ -154,7 +154,6 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
             'errors' => $errors
         ]);
     }
-
     // $db = $this->get('db');
     // $dataBase = new DataBaseHelper();
     $pdo = $this->get('db');
