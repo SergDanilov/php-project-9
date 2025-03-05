@@ -1,49 +1,45 @@
-<?=$this->fetch('header.phtml', ['page' => 'urls'])?>
-    <main class="flex-grow-1">
-        <div class="container-lg mt-3">
-            <?php if (!empty($flash['success'])): ?>
-                <div class="alert alert-success" role="alert">
-                    <?=$flash['success'][0]?>
-                </div>
-            <?php elseif (!empty($flash['error'])): ?>
-                <div class="alert alert-danger" role="alert">
-                    <?=$flash['error'][0]?>
-                </div>
-            <?php endif; ?>
-            <h1>Сайты</h1>
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover text-nowrap" data-test="urls">
-                    <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Имя</th>
-                        <th>Последняя проверка</th>
-                        <th>Код ответа</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <?php foreach ($urls as $url): ?>
-                      <?php
-                        $lastCheck = $lastChecks[$url['id']] ?? null;
-                        $lastCheckDate = $lastCheck['created_at'] ?? '';
-                        $statusCode = $lastCheck['status_code'] ?? '';
-                      ?>
-                      <tr>
-                        <td><?= $url['id'] ?></td>
-                        <td><a href="/urls/<?= $url['id'] ?>"><?= htmlspecialchars($url['name']) ?></a></td>
-                        <td>
-                          <?= $lastCheckDate ?>
-                        </td>
-                        <td>
-                        <?= $statusCode ?>
-                        </td>
-                      </tr>
-                    <?php endforeach; ?>
-                    </tbody>
-                </table>
+<main class="flex-grow-1">
+    <div class="container-lg mt-3">
+        <?php if (!empty($flash['success'])): ?>
+            <div class="alert alert-success" role="alert">
+                <?=$flash['success'][0]?>
             </div>
+        <?php elseif (!empty($flash['error'])): ?>
+            <div class="alert alert-danger" role="alert">
+                <?=$flash['error'][0]?>
+            </div>
+        <?php endif; ?>
+        <h1>Сайты</h1>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover text-nowrap" data-test="urls">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Имя</th>
+                    <th>Последняя проверка</th>
+                    <th>Код ответа</th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($urls as $url): ?>
+                  <?php
+                    $lastCheck = $lastChecks[$url['id']] ?? null;
+                    $lastCheckDate = $lastCheck['created_at'] ?? '';
+                    $statusCode = $lastCheck['status_code'] ?? '';
+                  ?>
+                  <tr>
+                    <td><?= $url['id'] ?></td>
+                    <td><a href="/urls/<?= $url['id'] ?>"><?= htmlspecialchars($url['name']) ?></a></td>
+                    <td>
+                      <?= $lastCheckDate ?>
+                    </td>
+                    <td>
+                    <?= $statusCode ?>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
-    </main>
-    <?=$this->fetch('footer.phtml')?>
-  </body>
-</html>
+    </div>
+</main>

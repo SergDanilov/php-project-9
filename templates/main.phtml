@@ -1,40 +1,36 @@
-    <?=$this->fetch('header.phtml', ['page' => 'main'])?>
-    <main class="flex-grow-1">
-      <div class="container-lg mt-3">
-        <div class="row">
-          <div class="col-12 col-md-10 col-lg-8 mx-auto border rounded-3 bg-light p-5">
-            <?php if (!empty($flash)): ?>
-                <p style="color: red"><?= $flash['error'][0]?></p>
-            <?php endif; ?>
-            
-            <?php if (isset($errors)): 
-              $placeholder = $errors['url'];?>
-            <?php else: ?>
-              <?php $placeholder = "https://www.example.com";?>
-            <?php endif; ?>
+<main class="flex-grow-1">
+  <div class="container-lg mt-3">
+    <div class="row">
+      <div class="col-12 col-md-10 col-lg-8 mx-auto border rounded-3 bg-light p-5">
+        <?php if (!empty($flash)): ?>
+            <p style="color: red"><?= $flash['error'][0]?></p>
+        <?php endif; ?>
+        
+        <?php if (isset($errors)): 
+          $placeholder = $errors['url'];?>
+        <?php else: ?>
+          <?php $placeholder = "https://www.example.com";?>
+        <?php endif; ?>
 
-            <h1 class="display-3">Анализатор страниц</h1>
-            <p class="lead">Бесплатно проверяйте сайты на SEO пригодность</p>
-              <form action="/urls" method="post" class="row" required>
-                <div class="col-8">
-                  <label for="text" class="visually-hidden">Url для проверки</label>
-                  <input type="text" required name="url[name]" value="" class="form-control form-control-lg<?php if (isset($errors)):?> is-invalid<?php endif; ?>" placeholder="<?= $placeholder ?>">
-                    <?php if (isset($errors)): ?>
-                      <?php foreach($errors as $key => $value): ?>
-                          <?php if ($key != 'url'): ?>
-                              <p style="color: red"><?= $value ?></p>
-                          <?php endif; ?>
-                      <?php endforeach; ?>
-                    <?php endif; ?>
-                </div>
-                <div class="col-2">
-                  <input type="submit" required class="btn btn-primary btn-lg ms-3 px-5 text-uppercase mx-3" value="Проверить"> 
-                </div>   
-              </form>
-          </div>
-        </div>
+        <h1 class="display-3">Анализатор страниц</h1>
+        <p class="lead">Бесплатно проверяйте сайты на SEO пригодность</p>
+          <form action="/urls" method="post" class="row" required>
+            <div class="col-8">
+              <label for="text" class="visually-hidden">Url для проверки</label>
+              <input type="text" required name="url[name]" value="" class="form-control form-control-lg<?php if (isset($errors)):?> is-invalid<?php endif; ?>" placeholder="<?= $placeholder ?>">
+                <?php if (isset($errors)): ?>
+                  <?php foreach($errors as $key => $value): ?>
+                      <?php if ($key != 'url'): ?>
+                          <p style="color: red"><?= $value ?></p>
+                      <?php endif; ?>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+            <div class="col-2">
+              <input type="submit" required class="btn btn-primary btn-lg ms-3 px-5 text-uppercase mx-3" value="Проверить"> 
+            </div>   
+          </form>
       </div>
-    </main>
-    <?=$this->fetch('footer.phtml')?>
-  </body>
-</html>
+    </div>
+  </div>
+</main>

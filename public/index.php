@@ -23,11 +23,13 @@ use Illuminate\Support;
 use Carbon\Carbon;
 use Dotenv\Dotenv;
 
+use function DI\string;
+
 // Старт PHP сессии
 session_start();
 
 $container = new Container();
-
+$app = AppFactory::createFromContainer($container);
 
 $dotenv = \Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->safeload();
@@ -78,17 +80,21 @@ $container->set('db', function () {
     return new PDO($dsn, $user, $pass, $options);
 });
 
-
-$container->set('renderer', function () {
-    // Параметром передается базовая директория, в которой будут храниться шаблоны
-    return new \Slim\Views\PhpRenderer(__DIR__ . '/../templates');
-});
-
 $container->set('flash', function () {
     return new \Slim\Flash\Messages();
 });
+$container->set('router', $app->getRouteCollector()->getRouteParser());
+$container->set('renderer', function () use ($container) {
+    // Параметром передается базовая директория, в которой будут храниться шаблоны
+    $phpView = new \Slim\Views\PhpRenderer(__DIR__ . '/../templates');
+    $phpView->addAttribute('router', $container->get('router'));
+    $phpView->setLayout('layout.phtml');
+    return $phpView;
+});
 
-$app = AppFactory::createFromContainer($container);
+
+
+
 $router = $app->getRouteCollector()->getRouteParser();
 
 $app->addErrorMiddleware(true, true, true);
@@ -100,7 +106,8 @@ $app->get('/', function (ServerRequest $request, Response $response): Response {
     $messages = $this->get('flash')->getMessages();
     $params = [
         'url' => '',
-        'flash' => $messages ?? []
+        'flash' => $messages ?? [],
+        'page' => 'main'
     ];
 
     return $this->get('renderer')->render($response, 'main.phtml', $params);
@@ -119,6 +126,7 @@ $app->get('/urls', function (ServerRequest $request, Response $response): Respon
         'urls' => $urlsList,
         'flash' => $messages,
         'lastChecks' => $lastChecksByUrlId,
+        'page' => 'urls'
     ];
 
     return $this->get('renderer')->render($response, '/urls/urls_show.phtml', $params);
@@ -149,9 +157,9 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
     $dataBase = new DataBaseHelper();
 
     try {
-        if ($normalizedUrl != null) {
-            $existingUrl = $dataBase->findUrlByName($db, $normalizedUrl);
-        }
+
+        $existingUrl = $dataBase->findUrlByName($db, $normalizedUrl);
+
         if ($existingUrl) {
             $this->get('flash')->addMessage('error', 'Страница уже существует!');
             return $response->withRedirect(
@@ -191,6 +199,7 @@ $app->get('/urls/{id:\d+}', function (ServerRequest $request, Response $response
         'url' => $urlData,
         'checks' => $checks,
         'flash' => $messages,
+        'page' => 'urls'
     ];
 
     return $this->get('renderer')->render($response, '/urls/url_check.phtml', $params);

@@ -6,7 +6,7 @@ use Illuminate\Support\Arr;
 
 class Normalizer
 {
-    public function normalizeUrl(string $url): string|null
+    public function normalizeUrl(string $url): string
     {
         $url = mb_strtolower(trim($url));
 
@@ -17,9 +17,6 @@ class Normalizer
 
         $parts = parse_url($url);
 
-        if (!$parts || empty($parts['host'])) {
-            return null;
-        }
         // По умолчанию 'http', если схема не указана
         $scheme = Arr::get($parts, 'scheme', 'http');
 
