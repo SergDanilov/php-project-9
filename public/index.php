@@ -214,33 +214,12 @@ $app->post(
         $h1 = optional($document->first('h1'))->text();
         $title = optional($document->first('head title'))->text();
         $description = $document->first('meta[name=description]')?->getAttribute('content');
-        // $descriptionElement = $document->find('meta[name="description"]');
-        // if ($descriptionElement) {
-        //     foreach ($descriptionElement as $element) {
-        //         $description = $element->getAttribute('content');
-        //     }
-        // } else {
-        //     $description = '-';
-        // }
 
         $dateTime = Carbon::now();
         $statusCode = $res->getStatusCode();
         // Передаем все в БД
         $addCheck = $dataBase->addUrlCheck($this->get('db'), $idUrl, $h1, $title, $description, $dateTime, $statusCode);
         if (!$addCheck) {
-            $this->get('flash')->addMessage('error', 'Некорректный URL');
-            $messages = $this->get('flash')->getMessages();
-
-            $params = [
-                'id' => $idUrl,
-                'url' => $url,
-                'flash' => $messages,
-                'checks' => null,
-            ];
-
-            $url = $router->urlFor('url.check', $params);
-            return $response->withStatus(500)->withRedirect($url);
-        } else {
             $this->get('flash')->addMessage('success', 'Страница успешно проверена');
             $messages = $this->get('flash')->getMessages();
             $checks = $dataBase->getUrlChecksById($this->get('db'), $idUrl);
@@ -253,6 +232,19 @@ $app->post(
 
             $url = $router->urlFor('url.check', $params);
             return $response->withRedirect($url);
+        } else {
+            $this->get('flash')->addMessage('error', 'Некорректный URL');
+            $messages = $this->get('flash')->getMessages();
+
+            $params = [
+                'id' => $idUrl,
+                'url' => $url,
+                'flash' => $messages,
+                'checks' => null,
+            ];
+
+            $url = $router->urlFor('url.check', $params);
+            return $response->withStatus(500)->withRedirect($url);
         }
     }
 )->setName('url_checks.store');

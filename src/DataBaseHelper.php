@@ -21,7 +21,7 @@ class DataBaseHelper
         return $url_checks;
     }
 
-    public function findUrlByName(PDO $db, string|null $url): ?array
+    public function findUrlByName(PDO $db, string $url): ?array
     {
         $stmt = $db->prepare('SELECT * FROM urls WHERE name = ?');
         $stmt->execute([$url]);
@@ -75,9 +75,9 @@ class DataBaseHelper
         string|null $description,
         Carbon $dateTime,
         int $statusCode
-    ): array|bool {
+    ): array {
 
-        try {
+        // try {
             $stmt = $db->prepare("
                 INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
                 VALUES (:url_id, :status_code, :h1, :title, :description, :created_at)
@@ -92,12 +92,13 @@ class DataBaseHelper
                 ':description' => $description,
                 ':created_at' => $dateTime,
             ]);
-            return $result; // Возвращаем результат выполнения запроса
-        } catch (\Exception $e) {
-            //Логируем ошибку или обрабатываем ее соответствующим образом
-            error_log("Ошибка добавления проверки URL: " . $e->getMessage());
-            return false; // Возвращаем false в случае неудачи
-        }
+            $result = $stmt->fetchAll();
+            return array_shift($result); // Возвращаем результат выполнения запроса
+        // } catch (\Exception $e) {
+        //     //Логируем ошибку или обрабатываем ее соответствующим образом
+        //     error_log("Ошибка добавления проверки URL: " . $e->getMessage());
+        //     return false; // Возвращаем false в случае неудачи
+        // }
     }
 
     public function getUrlById(PDO $db, int $id): array|null
