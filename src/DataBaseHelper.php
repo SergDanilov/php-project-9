@@ -93,12 +93,7 @@ class DataBaseHelper
                 ':created_at' => $dateTime,
             ]);
             $result = $stmt->fetchAll();
-            return array_shift($result); // Возвращаем результат выполнения запроса
-        // } catch (\Exception $e) {
-        //     //Логируем ошибку или обрабатываем ее соответствующим образом
-        //     error_log("Ошибка добавления проверки URL: " . $e->getMessage());
-        //     return false; // Возвращаем false в случае неудачи
-        // }
+            return array_shift($result);
     }
 
     public function getUrlById(PDO $db, int $id): array|null
@@ -119,8 +114,8 @@ class DataBaseHelper
 
     public function getLastUrlChecks(PDO $db): array
     {
-        $sql = "SELECT DISTINCT ON (url_id) url_id, created_at, status_code 
-                FROM url_checks 
+        $sql = "SELECT DISTINCT ON (url_id) url_id, created_at, status_code
+                FROM url_checks
                 ORDER BY url_id, created_at DESC";
         $stmt = $db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

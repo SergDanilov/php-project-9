@@ -47,7 +47,7 @@
           <?php $numCheck = count($checks) ?>
           <?php foreach ($checks as $check):?>
             <tr>
-              <td><?= htmlspecialchars($numCheck)?></td>               
+              <td><?= htmlspecialchars($numCheck)?></td>
               <td><?= htmlspecialchars($check['status_code'])?></td>
               <td><?= htmlspecialchars($check['h1'] ?? '-') ?></td>
               <td><?= htmlspecialchars($check['title'] ?? '-') ?></td>
@@ -62,4 +62,3 @@
     </div>
   </div>
 </main>
-        

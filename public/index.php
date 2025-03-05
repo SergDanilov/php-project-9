@@ -14,6 +14,8 @@ use Slim\Http\ServerRequest;
 use Slim\Http\Response;
 use Slim\Middleware\MethodOverrideMiddleware;
 use DI\Container;
+use App\Repository\UrlsRepository;
+use App\Repository\ChecksRepository;
 use App\DataBaseHelper;
 use App\Validator;
 use App\Normalizer;
@@ -92,9 +94,6 @@ $container->set('renderer', function () use ($container) {
     return $phpView;
 });
 
-
-
-
 $router = $app->getRouteCollector()->getRouteParser();
 
 $app->addErrorMiddleware(true, true, true);
@@ -115,11 +114,14 @@ $app->get('/', function (ServerRequest $request, Response $response): Response {
 
 //2. список страниц
 $app->get('/urls', function (ServerRequest $request, Response $response): Response {
-    $dataBase = new DataBaseHelper();
-    $urlsList = $dataBase->getUrls($this->get('db'));
+    $pdo = $this->get('db');
+    $repoUrls = new UrlsRepository($pdo);
+    $repoChecks = new ChecksRepository($pdo);
+
+    $urlsList = $repoUrls->getUrls();
     $messages = $this->get('flash')->getMessages();
 
-    $lastChecks = $dataBase->getLastUrlChecks($this->get('db'));
+    $lastChecks = $repoChecks->getLastUrlChecks();
     $lastChecksByUrlId = \Illuminate\Support\Arr::keyBy($lastChecks, 'url_id');
 
     $params = [
@@ -153,10 +155,12 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
         ]);
     }
 
-    $db = $this->get('db');
-    $dataBase = new DataBaseHelper();
+    // $db = $this->get('db');
+    // $dataBase = new DataBaseHelper();
+    $pdo = $this->get('db');
+    $repoUrls = new UrlsRepository($pdo);
     try {
-        $existingUrl = $dataBase->findUrlByName($db, $normalizedUrl);
+        $existingUrl = $repoUrls->findUrlByName($normalizedUrl);
 
         if ($existingUrl) {
             $this->get('flash')->addMessage('error', 'Страница уже существует!');
@@ -166,7 +170,7 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
         }
 
         $dateTime = Carbon::now();
-        $newUrl = $dataBase->addUrl($db, ['name' => $normalizedUrl], $dateTime);
+        $newUrl = $repoUrls->addUrl(['name' => $normalizedUrl], $dateTime);
         $this->get('flash')->addMessage('success', 'Страница успешно добавлена :)');
         return $response->withRedirect(
             $router->urlFor('url.check', ['id' => $newUrl['id']])
@@ -182,10 +186,14 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
 $app->get('/urls/{id:\d+}', function (ServerRequest $request, Response $response, $args): Response {
 
     $id = $args['id'];
-    $dataBase = new DataBaseHelper();
-    $dbUrls = $this->get('db');
-    $urlData = $dataBase->getUrlById($dbUrls, $id);
-    $checks = $dataBase->getUrlChecksById($this->get('db'), $id);
+    // $dataBase = new DataBaseHelper();
+    // $dbUrls = $this->get('db');
+    $pdo = $this->get('db');
+    $repoUrls = new UrlsRepository($pdo);
+    $repoChecks = new ChecksRepository($pdo);
+
+    $urlData = $repoUrls->getUrlById($id);
+    $checks = $repoChecks->getUrlChecksById($id);
 
     if ($urlData === null) {
         return $this->get('renderer')->render($response, '404.phtml')->withStatus(404);
@@ -209,10 +217,13 @@ $app->post(
     '/urls/{id:\d+}/checks',
     function (ServerRequest $request, Response $response, $args) use ($router): Response {
         $idUrl = $args['id'];
-        $dbUrls = $this->get('db');
-        $dataBase = new DataBaseHelper();
+        // $dbUrls = $this->get('db');
+        // $dataBase = new DataBaseHelper();
+        $pdo = $this->get('db');
+        $repoUrls = new UrlsRepository($pdo);
+        $repoChecks = new ChecksRepository($pdo);
 
-        $url = $dataBase->getUrlById($dbUrls, $idUrl);
+        $url = $repoUrls->getUrlById($idUrl);
         $urlName = \Illuminate\Support\Arr::get($url, 'name') ?? '';
 
         $client = new Client();
@@ -226,11 +237,11 @@ $app->post(
         $dateTime = Carbon::now();
         $statusCode = $res->getStatusCode();
         // Передаем все в БД
-        $addCheck = $dataBase->addUrlCheck($this->get('db'), $idUrl, $h1, $title, $description, $dateTime, $statusCode);
+        $addCheck = $repoChecks->addUrlCheck($idUrl, $h1, $title, $description, $dateTime, $statusCode);
         if (!$addCheck) {
             $this->get('flash')->addMessage('success', 'Страница успешно проверена');
             $messages = $this->get('flash')->getMessages();
-            $checks = $dataBase->getUrlChecksById($this->get('db'), $idUrl);
+            $checks = $repoChecks->getUrlChecksById($idUrl);
             $params = [
                 'id' => $idUrl,
                 'url' => $url,
