@@ -112,7 +112,6 @@ $app->get('/urls', function (ServerRequest $request, Response $response): Respon
     $urlsList = $dataBase->getUrls($this->get('db'));
     $messages = $this->get('flash')->getMessages();
 
-    // Получаем последние проверки для каждого URL одним запросом
     $lastChecks = $dataBase->getLastUrlChecks($this->get('db'));
     $lastChecksByUrlId = \Illuminate\Support\Arr::keyBy($lastChecks, 'url_id');
 
@@ -126,13 +125,11 @@ $app->get('/urls', function (ServerRequest $request, Response $response): Respon
 })->setName('urls.show');
 
 //3. добавление нового урла в список страниц и в бд
-
 $app->post('/urls', function (ServerRequest $request, Response $response) use ($router): Response {
     $urlData = $request->getParsedBodyParam('url');
     $validator = new Validator();
     $errors = $validator->validate($urlData);
 
-    // Нормализация URL
     $normalizer = new Normalizer();
     $rawUrl = $urlData['name'] ?? '';
     $normalizedUrl = $normalizer->normalizeUrl($rawUrl);
@@ -152,7 +149,6 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
     $dataBase = new DataBaseHelper();
 
     try {
-        // Проверка существования URL
         $existingUrl = $dataBase->findUrlByName($db, $normalizedUrl);
 
         if ($existingUrl) {
@@ -162,23 +158,14 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
             );
         }
 
-        // Добавление нового URL
-        try {
-            // Добавление даты и времени создания URL
-            $dateTime = Carbon::now();
-            $newUrl = $dataBase->addUrl($db, ['name' => $normalizedUrl], $dateTime);
-            $this->get('flash')->addMessage('success', 'Страница успешно добавлена :)');
-            return $response->withRedirect(
-                $router->urlFor('url.check', ['id' => $newUrl['id']])
-            );
-        } catch (Exception $e) {
-            // Обработка ошибки
-            $this->get('flash')->addMessage('error', 'Ошибка при добавлении страницы: ' . $e->getMessage());
-            return $response->withRedirect($router->urlFor('main'));
-        }
-    } catch (PDOException $e) {
-        // Обработка ошибки дубликата
-        $this->get('flash')->addMessage('error', 'Страница уже существует!');
+        $dateTime = Carbon::now();
+        $newUrl = $dataBase->addUrl($db, ['name' => $normalizedUrl], $dateTime);
+        $this->get('flash')->addMessage('success', 'Страница успешно добавлена :)');
+        return $response->withRedirect(
+            $router->urlFor('url.check', ['id' => $newUrl['id']])
+        );
+    } catch (Exception $e) {
+        $this->get('flash')->addMessage('error', 'Ошибка при добавлении страницы: ' . $e->getMessage());
         return $response->withRedirect($router->urlFor('main'));
     }
 })->setName('urls.store');
@@ -224,13 +211,9 @@ $app->post(
             throw new \InvalidArgumentException('URL is invalid');
         }
 
-        // Теперь работаем с $urlName как строкой
         $client = new Client();
-        $res = $client->request('GET', $urlName); // Используем $urlName вместо $url['name']
-        // Получаем статус код
-        $statusCode = $res->getStatusCode();
+        $res = $client->request('GET', $urlName);
 
-        // Получение тайтла, h1, дескрипшн  из документа
         $document = new Document($urlName, true);
         $h1 = optional($document->first('h1'))->text();
         $title = optional($document->first('head title'))->text();
@@ -242,8 +225,9 @@ $app->post(
         } else {
             $description = '-';
         }
-        // Добавление даты и времени создания проверки
+
         $dateTime = Carbon::now();
+        $statusCode = $res->getStatusCode();
         // Передаем все в БД
         $addCheck = $dataBase->addUrlCheck($this->get('db'), $idUrl, $h1, $title, $description, $dateTime, $statusCode);
         if (!$addCheck) {
@@ -276,5 +260,4 @@ $app->post(
     }
 )->setName('url_checks.store');
 
-//запускаем приложение в работу
 $app->run();
