@@ -149,8 +149,9 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
     $dataBase = new DataBaseHelper();
 
     try {
-        $existingUrl = $dataBase->findUrlByName($db, $normalizedUrl);
-
+        if ($normalizedUrl != null) {
+            $existingUrl = $dataBase->findUrlByName($db, $normalizedUrl);
+        }
         if ($existingUrl) {
             $this->get('flash')->addMessage('error', 'Страница уже существует!');
             return $response->withRedirect(
