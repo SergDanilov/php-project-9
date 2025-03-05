@@ -165,8 +165,7 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
             $router->urlFor('url.check', ['id' => $newUrl['id']])
         );
     } catch (Exception $e) {
-        $this->get('flash')->addMessage('error', 'Ошибка при добавлении страницы "'
-         . htmlspecialchars($normalizedUrl) . '": ' . $e->getMessage());
+        $this->get('flash')->addMessage('error', "Ошибка при добавлении страницы {$normalizedUrl} " . $e->getMessage());
         return $response->withRedirect($router->urlFor('main'));
     }
 })->setName('urls.store');
@@ -206,8 +205,7 @@ $app->post(
         $dataBase = new DataBaseHelper();
 
         $url = $dataBase->getUrlById($dbUrls, $idUrl);
-        // Определяем URL: если $url — строка, используем её, если массив — берем из ключа 'name'
-        $urlName = is_string($url) ? $url : (Support\Arr::get($url, 'name') ?? '');
+        $urlName = \Illuminate\Support\Arr::get($url, 'name') ?? '';
 
         $client = new Client();
         $res = $client->request('GET', $urlName);
