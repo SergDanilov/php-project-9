@@ -35,8 +35,8 @@ $dotenv->safeload();
 
 // Соединение с бд
 $container->set('db', function () {
-    // Используем переменную DATABASE_URL, из файла .env если он есть
-    $databaseUrl = getenv('DATABASE_URL') ?? $_ENV['DATABASE_URL'];
+    // Используем переменную DATABASE_URL из файла .env, если он есть
+    $databaseUrl = (getenv('DATABASE_URL') !== false) ? getenv('DATABASE_URL') : ($_ENV['DATABASE_URL'] ?? null);
 
     if (empty($databaseUrl)) {
         throw new InvalidArgumentException(
