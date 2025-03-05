@@ -100,7 +100,7 @@ class DataBaseHelper
         }
     }
 
-    public function getUrlById(PDO $db, int $id): array|string
+    public function getUrlById(PDO $db, int $id): array|null
     {
         // Делаем выборку из базы по ID
         $stmt = $db->prepare("SELECT COUNT(*) FROM urls WHERE id = :id");
@@ -112,7 +112,7 @@ class DataBaseHelper
             $urlData = $stmt->fetchAll();
             return array_shift($urlData);
         } else {
-            return "Запись с ID = {$id} не найдена.";
+            return null;
         }
     }
 

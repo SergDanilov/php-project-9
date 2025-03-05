@@ -165,7 +165,8 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
             $router->urlFor('url.check', ['id' => $newUrl['id']])
         );
     } catch (Exception $e) {
-        $this->get('flash')->addMessage('error', 'Ошибка при добавлении страницы: ' . $e->getMessage());
+        $this->get('flash')->addMessage('error', 'Ошибка при добавлении страницы "'
+         . htmlspecialchars($normalizedUrl) . '": ' . $e->getMessage());
         return $response->withRedirect($router->urlFor('main'));
     }
 })->setName('urls.store');
@@ -180,7 +181,7 @@ $app->get('/urls/{id:\d+}', function (ServerRequest $request, Response $response
     $urlData = $dataBase->getUrlById($dbUrls, $id);
     $checks = $dataBase->getUrlChecksById($this->get('db'), $id);
 
-    if ($urlData == "Запись с ID = {$id} не найдена.") {
+    if ($urlData === null) {
         return $this->get('renderer')->render($response, '404.phtml')->withStatus(404);
     }
     $messages = $this->get('flash')->getMessages();
@@ -207,9 +208,6 @@ $app->post(
         $url = $dataBase->getUrlById($dbUrls, $idUrl);
         // Определяем URL: если $url — строка, используем её, если массив — берем из ключа 'name'
         $urlName = is_string($url) ? $url : (Support\Arr::get($url, 'name') ?? '');
-        if (empty($urlName)) {
-            throw new \InvalidArgumentException('URL is invalid');
-        }
 
         $client = new Client();
         $res = $client->request('GET', $urlName);
@@ -217,14 +215,15 @@ $app->post(
         $document = new Document($urlName, true);
         $h1 = optional($document->first('h1'))->text();
         $title = optional($document->first('head title'))->text();
-        $descriptionElement = $document->find('meta[name="description"]');
-        if ($descriptionElement) {
-            foreach ($descriptionElement as $element) {
-                $description = $element->getAttribute('content');
-            }
-        } else {
-            $description = '-';
-        }
+        $description = $document->first('meta[name=description]')?->getAttribute('content');
+        // $descriptionElement = $document->find('meta[name="description"]');
+        // if ($descriptionElement) {
+        //     foreach ($descriptionElement as $element) {
+        //         $description = $element->getAttribute('content');
+        //     }
+        // } else {
+        //     $description = '-';
+        // }
 
         $dateTime = Carbon::now();
         $statusCode = $res->getStatusCode();
