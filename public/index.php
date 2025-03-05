@@ -155,9 +155,7 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
 
     $db = $this->get('db');
     $dataBase = new DataBaseHelper();
-
     try {
-
         $existingUrl = $dataBase->findUrlByName($db, $normalizedUrl);
 
         if ($existingUrl) {
