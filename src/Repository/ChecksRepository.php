@@ -28,7 +28,6 @@ class ChecksRepository
         return $url_checks;
     }
 
-    // добавление проверки в бд
     public function addUrlCheck(
         int $urlId,
         string|null $h1,
@@ -38,13 +37,11 @@ class ChecksRepository
         int $statusCode
     ): array {
 
-        // try {
             $stmt = $this->pdo->prepare("
                 INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
                 VALUES (:url_id, :status_code, :h1, :title, :description, :created_at)
             ");
 
-            // Выполняем запрос с параметрами для внесения в базу
             $result = $stmt->execute([
                 ':url_id' => $urlId,
                 ':status_code' => $statusCode,

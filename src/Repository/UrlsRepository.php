@@ -28,45 +28,30 @@ class UrlsRepository
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
-    // добавление URL в бд
     public function addUrl(array $url, Carbon $dateTime): array
     {
-        // Подготовка запроса
         $stmt = $this->pdo->prepare("
             INSERT INTO urls (name, created_at) VALUES (:name, :created_at)
         ");
 
-        // Выполняем запрос с параметрами для внесения в базу
-        if (
-            !$stmt->execute(
-                [':name' => $url['name'],
-                ':created_at' => $dateTime,]
-            )
-        ) {
-            // Обработка ошибки вставки
-            throw new \Exception("Error: Unable to insert URL.");
-        }
+        $stmt->execute(
+            [':name' => $url['name'],
+            ':created_at' => $dateTime,]
+        );
 
-        // Получаем добавленный URL
         $stmt = $this->pdo->prepare("SELECT * FROM urls WHERE name = :name");
         $stmt->execute([':name' => $url['name']]);
         $createdUrl = $stmt->fetchObject();
 
-        if ($createdUrl === false) {
-            throw new \Exception("Error: URL not found after insertion.");
-        }
-
-        return (array)$createdUrl; // Возвращаем добавленный URL в случае успеха
+        return (array)$createdUrl;
     }
 
 
     public function getUrlById(int $id): array|null
     {
-        // Делаем выборку из базы по ID
         $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM urls WHERE id = :id");
         $stmt->execute([':id' => $id]);
         $count = $stmt->fetchColumn();
-        // Проверяем, существует ли уже запись с данным ID
         if ($count > 0) {
             $stmt = $this->pdo->query("SELECT * FROM urls WHERE id = $id");
             $urlData = $stmt->fetchAll();

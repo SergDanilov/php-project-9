@@ -154,8 +154,7 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
             'errors' => $errors
         ]);
     }
-    // $db = $this->get('db');
-    // $dataBase = new DataBaseHelper();
+
     $pdo = $this->get('db');
     $repoUrls = new UrlsRepository($pdo);
     try {
@@ -185,8 +184,6 @@ $app->post('/urls', function (ServerRequest $request, Response $response) use ($
 $app->get('/urls/{id:\d+}', function (ServerRequest $request, Response $response, $args): Response {
 
     $id = $args['id'];
-    // $dataBase = new DataBaseHelper();
-    // $dbUrls = $this->get('db');
     $pdo = $this->get('db');
     $repoUrls = new UrlsRepository($pdo);
     $repoChecks = new ChecksRepository($pdo);
@@ -216,8 +213,6 @@ $app->post(
     '/urls/{id:\d+}/checks',
     function (ServerRequest $request, Response $response, $args) use ($router): Response {
         $idUrl = $args['id'];
-        // $dbUrls = $this->get('db');
-        // $dataBase = new DataBaseHelper();
         $pdo = $this->get('db');
         $repoUrls = new UrlsRepository($pdo);
         $repoChecks = new ChecksRepository($pdo);
