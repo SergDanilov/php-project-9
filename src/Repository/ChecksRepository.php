@@ -50,8 +50,8 @@ class ChecksRepository
                 ':description' => $description,
                 ':created_at' => $dateTime,
             ]);
-            $result = $stmt->fetchAll();
-            return array_shift($result);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $result;
     }
 
     public function getLastUrlChecks(): array
