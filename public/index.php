@@ -16,12 +16,11 @@ use Slim\Middleware\MethodOverrideMiddleware;
 use DI\Container;
 use App\Repository\UrlsRepository;
 use App\Repository\ChecksRepository;
-use App\DataBaseHelper;
 use App\Validator;
 use App\Normalizer;
 use DiDom\Document;
 use GuzzleHttp\Client;
-use Illuminate\Support;
+use Illuminate\Support\Arr;
 use Carbon\Carbon;
 use Dotenv\Dotenv;
 
@@ -55,11 +54,11 @@ $container->set('db', function () {
     }
 
     // Извлекаем значения с дефолтными значениями
-    $host = \Illuminate\Support\Arr::get($parts, 'host', 'localhost');
-    $port = \Illuminate\Support\Arr::get($parts, 'port', 5432); // Порт по умолчанию для PostgreSQL
-    $dbName = ltrim(\Illuminate\Support\Arr::get($parts, 'path', 'database_9'), '/');
-    $user = \Illuminate\Support\Arr::get($parts, 'user', 'analyzer_user');
-    $pass = \Illuminate\Support\Arr::get($parts, 'pass', '');
+    $host = Arr::get($parts, 'host', 'localhost');
+    $port = Arr::get($parts, 'port', 5432); // Порт по умолчанию для PostgreSQL
+    $dbName = ltrim(Arr::get($parts, 'path', 'database_9'), '/');
+    $user = Arr::get($parts, 'user', 'analyzer_user');
+    $pass = Arr::get($parts, 'pass', '');
 
     // Проверяем обязательные параметры
     if (empty($host) || empty($dbName)) {
@@ -118,14 +117,14 @@ $app->get('/urls', function (ServerRequest $request, Response $response): Respon
     $repoUrls = new UrlsRepository($pdo);
     $repoChecks = new ChecksRepository($pdo);
 
-    $urlsList = $repoUrls->getUrls();
+    $urls = $repoUrls->getUrls();
     $messages = $this->get('flash')->getMessages();
 
     $lastChecks = $repoChecks->getLastUrlChecks();
-    $lastChecksByUrlId = \Illuminate\Support\Arr::keyBy($lastChecks, 'url_id');
+    $lastChecksByUrlId = Arr::keyBy($lastChecks, 'url_id');
 
     $params = [
-        'urls' => $urlsList,
+        'urls' => $urls,
         'flash' => $messages,
         'lastChecks' => $lastChecksByUrlId,
         'page' => 'urls'
@@ -218,7 +217,7 @@ $app->post(
         $repoChecks = new ChecksRepository($pdo);
 
         $url = $repoUrls->getUrlById($idUrl);
-        $urlName = \Illuminate\Support\Arr::get($url, 'name') ?? '';
+        $urlName = Arr::get($url, 'name') ?? '';
 
         $client = new Client();
         $res = $client->request('GET', $urlName);
@@ -245,20 +244,19 @@ $app->post(
 
             $url = $router->urlFor('url.check', $params);
             return $response->withRedirect($url);
-        } else {
-            $this->get('flash')->addMessage('error', 'Некорректный URL');
-            $messages = $this->get('flash')->getMessages();
-
-            $params = [
-                'id' => $idUrl,
-                'url' => $url,
-                'flash' => $messages,
-                'checks' => null,
-            ];
-
-            $url = $router->urlFor('url.check', $params);
-            return $response->withStatus(500)->withRedirect($url);
         }
+        $this->get('flash')->addMessage('error', 'Некорректный URL');
+        $messages = $this->get('flash')->getMessages();
+
+        $params = [
+            'id' => $idUrl,
+            'url' => $url,
+            'flash' => $messages,
+            'checks' => null,
+        ];
+
+        $url = $router->urlFor('url.check', $params);
+        return $response->withStatus(500)->withRedirect($url);
     }
 )->setName('url_checks.store');
 

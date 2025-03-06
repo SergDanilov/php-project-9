@@ -17,7 +17,7 @@ class ChecksRepository
     public function getUrlChecks(): array
     {
         $stmt = $this->pdo->query("SELECT * FROM url_checks ORDER BY created_at DESC");
-        $url_checks = $stmt->fetchAll();
+        $url_checks = $stmt->fetch(PDO::FETCH_ASSOC);
         return $url_checks;
     }
 
@@ -50,8 +50,8 @@ class ChecksRepository
                 ':description' => $description,
                 ':created_at' => $dateTime,
             ]);
-            $result = $stmt->fetchAll();
-            return array_shift($result);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $result;
     }
 
     public function getLastUrlChecks(): array

@@ -34,30 +34,30 @@ class UrlsRepository
             INSERT INTO urls (name, created_at) VALUES (:name, :created_at)
         ");
 
-        $stmt->execute(
-            [':name' => $url['name'],
-            ':created_at' => $dateTime,]
-        );
+        $stmt->execute([
+            ':name' => $url['name'],
+            ':created_at' => $dateTime,
+        ]);
 
         $stmt = $this->pdo->prepare("SELECT * FROM urls WHERE name = :name");
         $stmt->execute([':name' => $url['name']]);
-        $createdUrl = $stmt->fetchObject();
+        $createdUrl = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return (array)$createdUrl;
+        return $createdUrl;
     }
 
 
     public function getUrlById(int $id): array|null
     {
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM urls WHERE id = :id");
+
+        // Подготавливаем запрос
+        $stmt = $this->pdo->prepare("SELECT * FROM urls WHERE id = :id");
         $stmt->execute([':id' => $id]);
-        $count = $stmt->fetchColumn();
-        if ($count > 0) {
-            $stmt = $this->pdo->query("SELECT * FROM urls WHERE id = $id");
-            $urlData = $stmt->fetchAll();
-            return array_shift($urlData);
-        } else {
-            return null;
-        }
+
+        // Получаем данные
+        $urlData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // Если данные найдены, возвращаем их, иначе возвращаем null
+        return $urlData ?: null;
     }
 }
